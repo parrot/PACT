@@ -1,18 +1,3 @@
-## Goals
-
-* Modular
-* Well tested
-* Flexible
-* Optimizations
-* Typed
-* Not written in PIR
-* Similar featureset as PCT
-* Similar interface as PCT
-* Best-practices of compiler design
-    * Recommended reading: The Dragon Book (_Compilers: Principles, Techniques, and Tools_ by Aho, Lam, Sethi, and Ullman)
-
-----------
-
 ## Compiler object
 
 registered via compreg.
@@ -108,14 +93,6 @@ One of the motivations for PACT is the hoops needed to move POST from generating
 Share as much across layers as possible.  Maintain as much type information as possible.
 
 After that, start building top-down.  Add features to PAST and see if any additional POST/CFG/bytecode features are needed to support it.
-
-----------
-
-## Round-trip
-
-Fact that PBC can have arbitrary objects serialized makes 100% roundtrip very very difficult.  But can do it for general case.
-
-Need a new assembly language.  "No-magic" version of PIR.
 
 ----------
 

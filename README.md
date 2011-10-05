@@ -1,7 +1,119 @@
 # Parrot Alternate Compiler Toolkit
 
-This repo holds the plans for a rewrite of the Parrot Compiler Toolkit, which
-was sparked by benabik++'s comments during his Google Summer of Code 2011
-project.
+This is a redesign and rebuild of the Parrot Compiler Toolkit (PCT), which
+is installed with Parrot.  PCT provides a quick and easy framework to build
+high-level languages (HLLs) on Parrot, but has its limitations.  The main
+goal of PACT is to provide the same ease of use as PCT, but add easier
+extensibility, more power, and more features.  This project was sparked by
+benabik++'s comments during his Google Summer of Code 2011 project.
 
-The main feature of PACT will be that it is not written in PIR.
+Currently the project is in the planning stages and this repository contains
+notes and design documents.  Assistance, forks, and commentary are welcome!
+
+## Project Goals
+
+* Ease of Hacking
+* Similar to PCT
+* Modular and Flexible
+* Test-Driven Development
+* Bytecode Generation
+* Typed
+* Optimizations
+* Round-Trip Code
+* Use Compiler Best Practices
+
+### Ease of Hacking
+
+PCT was written in PIR, which gives it a lot of access to the Parrot VM,
+but makes it very difficult to work on.  To make the source easier to work
+on, PACT will be implemented in Winxed, which gives most of the power of
+direct PIR but in a far more expressive form.
+
+### Similar to PCT
+
+There is a lot of experience in the Parrot community with PCT, and its
+value in developing large compilers has been proved by Rakudo.  PACT does
+not strive for 100% compatibility, but the features and interface of PCT
+should be kept in mind while designing/building PACT.
+
+### Modular and Flexible
+
+While PACT will strive to be a one-size-fits-all toolkit, we must also
+recognize that someone will always have something that doesn't quite match
+what PACT does.  PACT should be designed in pieces that are easy to use
+individually, replace, and combine in new and interesting ways.  There are
+some uses in particular to keep in mind:
+
+* Alternate lexing/parsing frameworks
+* Including low-level code in high-level <br />
+  (Think POST nodes in a PAST tree.  A more structured version of inline
+   nodes)
+* Compiling portions of a program.<br />
+  (Given a PAST expression, return a POST expression not a full program.)
+
+### Test-Driven Development
+
+When working on as complicated a system as a compiler, it is very difficult
+to determine ahead of time what will break when you alter a section of
+code.  A thorough testing framework will help ensure that the compilers
+that depend on PACT will not break due to updates.
+
+### Bytecode Generation
+
+PCT was very tied to the structure of PIR.  PACT is intended to be designed
+with the idea of building directly to bytecode from the start.  In
+particular, this means that no portion of the system can rely on simply
+generating PIR that does the right thing.
+
+On the other hand, PIR is an extremely useful format.  PBC is not stable
+across versions of parrot, so being able to save PIR bootstrap steps is
+invaluable.  Other backends such as Winxed may also be useful.
+
+### Typed
+
+The key to building sane bytecode is maintaining knowledge of what type
+every value in the tree is intended to be.  Because of this, every PACT
+node should maintain an idea of what type it returns (even if this is
+'void').  In addition, passing around information encoded into strings
+makes further processing of it very difficult so all information in the
+tree should be a PACT node.  (For example, registers should be
+`PACT::Register.new('P', 2)`, not `'$P2'`.)
+
+### Optimizations
+
+While creating fast code can be done by hand, it is usually far more
+convenient to write what you mean and have the computer make it faster.
+While optimizing code is not required for the design of PACT, it should be
+simple to add and customize.  Notably, the [tree
+optimization](https://github.com/parrot/tree-optimization) project should
+be integrated very deeply into the system.
+
+Some basic optimizations like constant folding (for non-PMC values) and
+dead code elimination can be implemented quickly.  More complex
+optimizations involving SSA and data-flow analysis are not required, but
+the ability to perform them should be kept in mind.
+
+### Round-Trip Code
+
+The generating high quality code is difficult when the output of the
+compiler is opaque.  PASM is a mostly dead format and PIR is often derided
+for both the amount of hidden work it does and its compiler IMCC.  New
+assembly and intermediate formats are required.  These formats should be as
+easy to generate and process as possible.
+
+The ability to store arbitrary objects in bytecode files means that not
+every PBC can be regenerated faithfully from disassembly, but handling the
+simple cases will keep the disassembler honest and make code generation
+easier to test.  Human-readability is key, but ease of writing is not.
+
+### Use Compiler Best Practices
+
+Recommended reading: The Dragon Book (_Compilers: Principles, Techniques,
+and Tools_ by Aho, Lam, Sethi, and Ullman)
+
+Those who do not learn from history are doomed to repeat it.  While
+converting to multiple intermediate steps or worrying about SSA may seem
+like unnecessary work, using similar phases and styles as other compilers
+will make it easy to use the lessons learned from them.  GCC and LLVM are
+designed the way they are because it helps them generate fast and correct
+code, so emulating them is no bad thing.
