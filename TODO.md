@@ -2,8 +2,10 @@
 
 ## Short Term
 
-* Clean up brainstorming into real design docs
+* Flesh out design docs where needed <br />
+  Input from HLL authors _very_ welcome!
 * But don't get caught up designing things we aren't implementing
+* Decide on some coding standards (package names, etc)
 * Build framework: Makefile, test harness, etc
 * Sketch (design and/or code) out lowest level compiler
 
