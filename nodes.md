@@ -17,17 +17,21 @@ name isn't very good.
 
 ## Layers
 
-There are at least three, possibly four, layers of PACT nodes.
+There are four layers of PACT nodes.
 
 * *Base* - Contains common functionally to all other layers
 * *PAST* - High level syntax trees
 * *POST* - Low level opcode trees
 * *Bytecode* - Low level opcode blocks
 
-Note that POST and Bytecode may or may not be the same layer, but organized
-differently.  Primary difference is that POST is structured as a tree,
-while Bytecode is structured by basic blocks for easy conversion to an
-output format.
+Most HLLs will generate PAST trees and let PACT handle the rest.  More
+complex languages may add additional phases to add optimizations or
+extensions.  Some "HLLs" may target POST instead to act as more of a
+system-level language.
+
+The bytecode layer supports control-flow graphs and the more linear
+representation needed for output generation.  It very notably is not a tree
+structure, but is a rigid hierarchy.
 
 ## Common Nodes
 
@@ -130,6 +134,11 @@ A sequence of several Op nodes.  Non-void Ops return the value of its last
 child.  If any other return value is needed, temporary variables should be
 used.
 
+### Label
+
+POST trees may contain labels, but the usual form will be directly
+referencing a Ops or Sub.
+
 
 
 ## Bytecode
@@ -143,7 +152,16 @@ control flow graphs.
 * Register - INSP register
 * Block - Sequence of Ops, no return value
 * Sub - Parrot sub, contains a block
+* Conditional - choice between two blocks based on a register
 
 Ops such as goto may refer to blocks.  It is at this level that information
-such as labels and registers are added.  All variables should have direct
-register information attached.
+such as labels and registers are added.  No complex structures such as loops or
+lexical variables exist.  The should all be desugared to register-level
+variabes, lookup opcodes, conditionals, and blocks.
+
+This layer will also support a structure directly related to bytecode with
+basic blocks replaced with labels and gotos.
+
+Bytecode structures should _never_ create deep trees.  Subs contain blocks,
+block contain ops, ops contain constants or registers.  The only exception is
+the link from the end of a block to the next block or conditional in CFG form.
