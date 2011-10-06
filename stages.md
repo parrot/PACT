@@ -15,8 +15,16 @@ First the obviously needed stages:
 
 * *PAST to POST*: Generates POST tree from PAST
 * *POST to CFG*: Generates CFG from POST tree
-* *CFG to PIR*: Generates PIR for a given CFG
-* *CFG to PBC*: Creates a packfile from a CFG.
+* *CFG to Bytecode*: Turns basic blocks into labels and gotos
+* *Register Allocation*: assigns numbers to register objects
+
+These stages take a PACT "bytecode" structure and convert it to a runnable
+or savable format:
+
+* *PIR*
+* *Assembly* - PACT's assembly format
+* *Packfile* - Create Parrot Packfile PMCs with
+* *Eval* - May depend on Packfile's output
 
 Additional stages:
 
@@ -27,7 +35,7 @@ Additional stages:
 
 
 ### Debug
-  
+
 Prints type of each node before passing to wrapped stage.  Design of this
 stage drives some general questions about stages.  Should this do some kind
 of runtime subclassing of the wrapped stage?  Should we pass the visitor to
