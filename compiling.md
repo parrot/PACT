@@ -18,12 +18,35 @@ a tree, they are intended to be used as follows:
 	s = stage.new(options)
 	tree = s.visit(tree)
 
+Stages are generally passed around as a kind of proto-object.  Fresh stages
+are created at each usage so that object attributes can be used for
+context during the stage.  The `new` method is used to get a fresh object
+for each use of the stage.
+
 A stage should generally leave the passed in tree intact, so that other
 trees can share common sub-trees.
 
 The name of the stage should be human recognizable but simple enough to use
 as command line arguments (perhaps something like
 `--stage=optimizer=agressive`)
+
+Stages should, wherever possible, be able to start from any size of tree so
+that different portions of a tree can be run through different stages and
+spliced together.  To enable extensibility, stages should be as lenient as
+possible about unknown node types in the tree, passing them through
+unmolested when possible.
+
+### Errors and Warnings
+
+There should be support code that provides clear and helpful information
+when a state hits a problem.  Likely there will be a warning and error
+method in the base stage class.  These methods should take the message and
+the node that generated it.  Source location information will be kept on
+nodes so clear and informative messages can be generated.  If any
+exceptions are thrown the stage runner should print the error and hide the
+backtrace unless verbose output is requested.
+
+### Tags
 
 The input and output tags are strings describing the input and output
 trees.  Generally this describes a phase of compilation such as "source",
@@ -33,18 +56,16 @@ information can be attached.  These tags serve two purposes: sanity testing
 a stream of stages, and allowing the user to stop output at arbitrary
 points.  (Perhaps this should standardized to an array of strings.)
 
-Stages are generally passed around as a kind of proto-object.  Fresh stages
-are created at each usage so that object attributes can be used for
-context during the stage.  The `new` method is used to get a fresh object
-for each use of the stage.
+### Default Visit Methods
 
-Stages should, wherever possible, be able to start from any size of tree so
-that different portions of a tree can be run through different stages and
-spliced together.  To enable extensibility, stages should be as lenient as
-possible about unknown node types in the tree, passing them through
-unmolested when possible.
+Stages should generally through unknown types.  Obviously some stages will
+be more strict.
 
-Some default visit methods may be:
+	method visit(var node) {
+		return node;
+	}
+
+When encountering a PACT node, we should recurse.
 
 	method visit(PACT::Node node) {
 		Array children;
@@ -52,10 +73,6 @@ Some default visit methods may be:
 			children.push(visit(n));
 		}
 		return node.clone().set_children(children)
-	}
-
-	method visit(var node) {
-		return node;
 	}
 
 
@@ -68,10 +85,19 @@ Contains an array of stages to run.  Performs basic sanity checks like
 comparing the input and output adjacent stages.  Provides the `compile`
 function from PDD31, including options of stopping at a given phase or at a
 kind of output.  (The `target` option from PDD31 likely refers to the
-output tag from a stage.)
+output tag from a stage.)  Some common debugging ability like timing will
+also be handled here.
 
 This class likely will _not_ provide convenience methods for adding and
 removing stages, preferring to provide access to the underlying array.
+
+**Conjecture:**  Even mildly complex compilers are not a linear set of
+stages.  There are often many paths that don't necessarily lead to the same
+place.  The default stage runner simply takes a array, assuming all of
+those decisions have been worked out ahead of time.  However, it will
+rapidly come to be that we will need support for multiple exclusive output
+formats (Packfile, Eval, PIR, PACT ASM).  Some basic method of handling
+"add these stages if you want target X" will likely be useful.
 
 
 
