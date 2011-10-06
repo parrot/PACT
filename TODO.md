@@ -24,10 +24,9 @@ useful.  The implementation plan looks a little like this:
     * Stage structure
 * Build assembly language on top of that
     * assembler and disassembler
-* Build control-flow graph IR
-* Build tree-like POST (optional, POST may only be CFG level)
+* Add control-flow graph primitives (basic blocks linked by conditionals)
+* Build tree-like POST
 * Build PAST
-* Build simple language that exposes PAST very directly (or convert existing)
 
 Share as much across layers as possible.  (We want only one
 implementation/type for things like registers, variables, symbol
@@ -38,3 +37,26 @@ integer constant, remember that all the way down to the bytecode.
 
 After that, start building top-down.  Add features to PAST and see if any
 additional POST/CFG/bytecode features are needed to support it.
+
+## Languages
+
+Both as a sanity check and as a kind of textual IR, it would be extremely
+useful to build extremely simple languages on top of several layers of
+PACT.
+
+An assembly-esque language directly on top of our bytecode support classes
+allows for easy introspection of the output of the compiler.  In addition,
+once a PACT assembly format stabilizes, it would be possible (and likely
+encouraged) to create a version of the assembler in C to function as a
+replacement for PIR/IMCC as the de facto standard for bootstrapping.
+
+An extended assembly language on top of the opcode tree format would be
+easier for human production and let them use the same standard shortcuts
+the compiler tends to.  Alternatively, this could be a viable target for a
+system-level language like Winxed.
+
+A full language that exposes the high level AST as directly as possible is
+an excellent tool for testing new features and showing an example for new
+implementers.  Ideally there will be many languages at this level, so an
+official in-core language is less vital but having some language use it as
+it is being developed will be key to creating a sane API.
