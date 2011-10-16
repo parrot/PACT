@@ -1,0 +1,135 @@
+/* Basic disassembler to explore the Packfile PMCs */
+
+function get_packfile(string filename) {
+	var packfile = new 'Packfile';
+
+	var file = open(filename);
+	file.encoding('binary');
+	packfile.unpack(string(file.readall()));
+	file.close();
+
+	return packfile;
+}
+
+function print_header(var packfile) {
+	// Pull it into a single hash for simplicity
+	var info = new 'Hash';
+	for( string key in [
+			'wordsize', 'byteorder', 'fptype', 'uuid_type',
+			'version_major', 'version_minor', 'version_patch',
+			'bytecode_major', 'bytecode_minor'
+			] ) {
+		info[key] = int(packfile[key]);
+	}
+	info['uuid'] = string(packfile['uuid']);
+
+	say( 'Core Version    : ', info['version_major'], '.',
+			info['version_minor'], '.', info['version_patch'] );
+	say( 'Bytecode Version: ', info['bytecode_major'],
+			'.', info['bytecode_minor'] );
+	say( 'UUID (type ', info['uuid_type'], ')   : ', info['uuid'] );
+	say( 'Wordsize ', info['wordsize'],
+		'  Byteorder ', info['byteorder'],
+		'  Floattype ', info['fptype'] );
+}
+
+function bytecode_segment(var segment) {
+	say( '   Opmap:' );
+	// XXX: PMCs missing oplib information
+	var opmap = segment.opmap();
+	int i, size = opmap;
+	for (i = 0; i < size; i++)
+		say( '      ', i, ': ', opmap[i] );
+
+	// TODO: disassemble integers into bytecode information
+	// XXX: Useful information in op_info_table, missing from PMCs
+	//  - opcount, types, jump
+	say( '   Bytecode:' );
+	print( '      ' );
+	size = elements(segment);
+	for (i = 0; i < size; i++)
+		print( segment[i], ', ' );
+	say();
+}
+
+function constant_table(var segment) {
+	int i, size;
+
+	size = segment.num_count();
+	say( '   ', size, ' numeric constants:' );
+	for (i = 0; i < size; i++)
+		say( '      ', i, ': ', float(segment[i]) );
+
+	size = segment.str_count();
+	say( '   ', size, ' string constants:' );
+	for (i = 0; i < size; i++) {
+		string s = segment[i];
+		say( '      ', i, ' (', encoding_name(s), '): ', s );
+	}
+
+	// XXX: This appears to be WRONG!
+	size = segment.num_count();
+	say( '   ', size, ' pmc constants:' );
+	for (i = 0; i < size; i++) {
+		var c = segment[i];
+		say( '      ', i, ' (', typeof(c), '): ', c );
+	}
+}
+
+function debug_segment(var segment) {
+	int size = segment;
+	say( '   ', size, ' debug mappings:' );
+	for (int i = 0; i < size; i++) {
+		// XXX: Seems to output line for filename?
+		string file = segment[i];
+		int line = var(segment[i]);
+		say( '      ', i, ': ', file, ' ', line );
+	}
+}
+
+function main[main](var argv) {
+	// Process arguments
+	string progname = argv[0];
+	if (int(argv) != 2) {
+		cry('Usage: ', progname, ' <PBC file>');
+		exit(1);
+	}
+	string filename = argv[1];
+
+	// Get a Packfile
+	var packfile;
+	try {
+		packfile = get_packfile(filename);
+	} catch (e) {
+		cry( progname, ': Error reading packfile ', filename );
+		cry(e);
+		exit(1);
+	}
+
+	// Basic information
+	print_header(packfile);
+
+	// Directory
+	var directory = packfile.get_directory();
+	say();
+	say( elements(directory), ' segments:') ;
+	for( var segname in directory ) {
+		var segment = directory[segname];
+		string type = typeof(segment);
+
+		say( segname );
+		switch(type) {
+		case 'PackfileBytecodeSegment':
+			bytecode_segment(segment);
+			break;
+		case 'PackfileConstantTable':
+			constant_table(segment);
+			break;
+		case 'PackfileDebug':
+			debug_segment(segment);
+			break;
+		default:
+			say( '   Unknown segment type ', type );
+		}
+	}
+}
