@@ -67,8 +67,7 @@ function constant_table(var segment) {
 		say( '      ', i, ' (', encoding_name(s), '): ', s );
 	}
 
-	// XXX: This appears to be WRONG!
-	size = segment.num_count();
+	size = segment.pmc_count();
 	say( '   ', size, ' pmc constants:' );
 	for (i = 0; i < size; i++) {
 		var c = segment[i];
