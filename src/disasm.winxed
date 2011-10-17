@@ -206,7 +206,7 @@ function constant_table(var packfile) {
 
 	arr = packfile.pmcs;
 	size = elements(arr);
-	say( '   ', size, ' pmc constants:' );
+	say( '   ', size, ' PMC constants:' );
 	for (i = 0; i < size; ++i) {
 		var c = arr[i];
 		string type = typeof(c);
