@@ -79,7 +79,8 @@ namespace PACT {
 					debug = segment;
 					break;
 				default:
-					die("Unknown bytecode segment type: " + typeof(segment));
+					string type = typeof(segment);
+					die("Unknown bytecode segment type: " + type);
 				}
 			}
 
