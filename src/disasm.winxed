@@ -88,19 +88,19 @@ namespace PACT {
 			size = constants.num_count();
 			var nums = new 'FixedFloatArray'(size);
 			self.nums = nums;
-			for (i = 0; i < size; i++)
+			for (i = 0; i < size; ++i)
 				nums[i] = float(constants[i]);
 
 			size = constants.pmc_count();
 			var pmcs = new 'FixedPMCArray'(size);
 			self.pmcs = pmcs;
-			for (i = 0; i < size; i++)
+			for (i = 0; i < size; ++i)
 				pmcs[i] = var(constants[i]);
 
 			size = constants.str_count();
 			var strings = new 'FixedStringArray'(size);
 			self.strings = strings;
-			for (i = 0; i < size; i++)
+			for (i = 0; i < size; ++i)
 				strings[i] = string(constants[i]);
 
 			// Load debug mappings
@@ -109,7 +109,7 @@ namespace PACT {
 			var debug_lines = new 'FixedIntegerArray'(size);
 			self.debug_files = debug_files;
 			self.debug_lines = debug_lines;
-			for (i = 0; i < size; i++) {
+			for (i = 0; i < size; ++i) {
 				debug_files[i] = strings[int(string(debug[i]))];
 				debug_lines[i] = int(var(debug[i]));
 			}
@@ -119,14 +119,14 @@ namespace PACT {
 			size = opmap;
 			var map = new 'FixedStringArray'(size);
 			self.opmap = map;
-			for (i = 0; i < size; i++)
+			for (i = 0; i < size; ++i)
 				map[i] = opmap[i];
 
 			// Bytecode
 			size = elements(bytecode);
 			var ops = new 'FixedIntegerArray'(size);
 			self.bytecode = ops;
-			for (i = 0; i < size; i++)
+			for (i = 0; i < size; ++i)
 				ops[i] = bytecode[i];
 		}
 	}
@@ -150,7 +150,7 @@ function bytecode_segment(var packfile) {
 	// XXX: PMCs missing oplib information
 	var opmap = packfile.opmap;
 	int i, size = elements(opmap);
-	for (i = 0; i < size; i++)
+	for (i = 0; i < size; ++i)
 		say( '      ', i, ': ', opmap[i] );
 
 	// TODO: disassemble integers into bytecode information
@@ -162,7 +162,7 @@ function bytecode_segment(var packfile) {
 	size = elements(bytecode);
 	if( size > 0 )
 		print( bytecode[0] );
-	for (i = 1; i < size; i++)
+	for (i = 1; i < size; ++i)
 		print( ', ', bytecode[i] );
 	say();
 }
@@ -174,13 +174,13 @@ function constant_table(var packfile) {
 	arr = packfile.nums;
 	size = elements(arr);
 	say( '   ', size, ' numeric constants:' );
-	for (i = 0; i < size; i++)
+	for (i = 0; i < size; ++i)
 		say( '      ', i, ': ', arr[i] );
 
 	arr = packfile.strings;
 	size = elements(arr);
 	say( '   ', size, ' string constants:' );
-	for (i = 0; i < size; i++) {
+	for (i = 0; i < size; ++i) {
 		string s = arr[i];
 		say( '      ', i, ' (', encoding_name(s), '): "', escape(s), '"' );
 	}
@@ -188,7 +188,7 @@ function constant_table(var packfile) {
 	arr = packfile.pmcs;
 	size = elements(arr);
 	say( '   ', size, ' pmc constants:' );
-	for (i = 0; i < size; i++) {
+	for (i = 0; i < size; ++i) {
 		var c = arr[i];
 		string type = typeof(c);
 		print( '      ', i, ' (', type, '): ' );
@@ -206,7 +206,7 @@ function debug_segment(var packfile) {
 	int size = elements(debug_files);
 
 	say( '   ', size, ' debug mappings:' );
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < size; ++i)
 		say( '      ', i, ': ', debug_files[i], ' ', debug_lines[i] );
 }
 
