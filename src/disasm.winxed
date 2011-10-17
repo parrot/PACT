@@ -6,9 +6,13 @@ namespace PACT {
 		var header;
 
 		// Segment names
+		var annotations_name;
 		var bytecode_name;
 		var constants_name;
 		var debug_name;
+
+		// Annotations
+		var annotations;
 
 		// Constants
 		var nums;
@@ -51,6 +55,7 @@ namespace PACT {
 			header['uuid'] = string(packfile['uuid']);
 
 			// Segments
+			var annotations;
 			var bytecode;
 			var constants;
 			var debug;
@@ -60,6 +65,12 @@ namespace PACT {
 			for( string name in directory ) {
 				var segment = directory[name];
 				switch(typeof(segment)) {
+				case 'PackfileAnnotations':
+					if( annotations != null )
+						die("Got more than one annotation segment");
+					self.annotations_name = name;
+					annotations = segment;
+					break;
 				case 'PackfileBytecodeSegment':
 					if( bytecode != null )
 						die("Got more than one bytecode segment");
@@ -83,6 +94,14 @@ namespace PACT {
 					die("Unknown bytecode segment type: " + type);
 				}
 			}
+
+			// Load annotations
+			// TODO: Don't just hang onto the PackfileAnnotation
+			size = elements(annotations);
+			var annos = new 'FixedPMCArray'(size);
+			self.annotations = annos;
+			for (i = 0; i < size; ++i)
+				annos[i] = annotations[i];
 
 			// Load constants
 			size = constants.num_count();
@@ -210,6 +229,20 @@ function debug_segment(var packfile) {
 		say( '      ', i, ': ', debug_files[i], ' ', debug_lines[i] );
 }
 
+function annotations_segment(var packfile) {
+	var annotations = packfile.annotations;
+	int size = elements(annotations);
+
+	say( '   ', size, ' annotations:' );
+	for (int i = 0; i < size; ++i) {
+		var annotation = annotations[i];
+		int offset = annotation.get_offset();
+		string name = annotation.get_name();
+		// XXX: No way to determine value type
+		say( '      ', offset, ': ', name );
+	}
+}
+
 function main[main](var argv) {
 	// Process arguments
 	string progname = argv[0];
@@ -235,6 +268,8 @@ function main[main](var argv) {
 	constant_table(packfile);
 	say(packfile.debug_name);
 	debug_segment(packfile);
+	say(packfile.annotations_name);
+	annotations_segment(packfile);
 	say(packfile.bytecode_name);
 	bytecode_segment(packfile);
 }
