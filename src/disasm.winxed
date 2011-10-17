@@ -109,8 +109,8 @@ namespace PACT {
 			self.debug_files = debug_files;
 			self.debug_lines = debug_lines;
 			for (i = 0; i < size; i++) {
-				debug_files[i] = strings[int(var(debug[i]))];
-				debug_lines[i] =         int(var(debug[i]));
+				debug_files[i] = strings[int(string(debug[i]))];
+				debug_lines[i] = int(var(debug[i]));
 			}
 
 			// Opmap
