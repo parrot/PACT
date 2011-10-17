@@ -9,6 +9,13 @@
 * Build framework: Makefile, test harness, etc
 * Sketch (design and/or code) out lowest level compiler
 
+`src/disasm.winxed` contains the beginnings of a PBC -> PACT disassembler.
+The next steps for that are:
+
+* Extract Packfile class
+* Setup infrastructure to _build_ said class.
+* Setup test to test said class
+
 ## Long Term
 
 One of the main motivations of PACT is generating bytecode.  Instead of
