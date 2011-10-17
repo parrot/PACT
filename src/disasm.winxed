@@ -191,22 +191,10 @@ function constant_table(var packfile) {
 		var c = arr[i];
 		string type = typeof(c);
 		print( '      ', i, ' (', type, '): ' );
-		switch(type) {
-		case 'FixedIntegerArray':
-			int elems = elements(c);
-			print('[');
-			if (elems > 0)
-				print( c[0] );
-			for (int j = 1; j < elems; j++)
-				print( ', ', c[j] );
-			say(']');
-			break;
-		default:
-			try {
-				say(c);
-			} catch () {
-				say('<Unprintable>');
-			}
+		try {
+			say(c);
+		} catch () {
+			say('<Unprintable>');
 		}
 	}
 }
