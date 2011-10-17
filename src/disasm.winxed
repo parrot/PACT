@@ -1,27 +1,138 @@
 /* Basic disassembler to explore the Packfile PMCs */
 
-function get_packfile(string filename) {
-	var packfile = new 'Packfile';
+namespace PACT {
+	class Packfile {
+		// PBC header
+		var header;
 
-	var file = open(filename);
-	file.encoding('binary');
-	packfile.unpack(string(file.readall()));
-	file.close();
+		// Segment names
+		var bytecode_name;
+		var constants_name;
+		var debug_name;
 
-	return packfile;
+		// Constants
+		var nums;
+		var pmcs;
+		var strings;
+
+		// Debug mappings
+		var debug_files;
+		var debug_lines;
+
+		// Bytecode information
+		var opmap;
+		var bytecode;
+
+		function Packfile(var packfile) {
+			// Often used variable
+			int size, i;
+
+			if( packfile instanceof 'String' ) {
+				string name = packfile;
+				packfile = new 'Packfile';
+				var file = open(name);
+				file.encoding('binary');
+				packfile.unpack(string(file.readall()));
+				file.close();
+			}
+
+			if( !(packfile instanceof 'Packfile') )
+				die("Need a PBC filename or Packfile PMC");
+
+			// Extract header information
+			var header;
+			self.header = header = new 'Hash';
+			for( string key in [
+					'wordsize', 'byteorder', 'fptype', 'uuid_type',
+					'version_major', 'version_minor', 'version_patch',
+					'bytecode_major', 'bytecode_minor'
+					] )
+				header[key] = int(packfile[key]);
+			header['uuid'] = string(packfile['uuid']);
+
+			// Segments
+			var bytecode;
+			var constants;
+			var debug;
+
+			// Find the segments
+			var directory = packfile.get_directory();
+			for( string name in directory ) {
+				var segment = directory[name];
+				switch(typeof(segment)) {
+				case 'PackfileBytecodeSegment':
+					if( bytecode != null )
+						die("Got more than one bytecode segment");
+					self.bytecode_name = name;
+					bytecode = segment;
+					break;
+				case 'PackfileConstantTable':
+					if( constants != null )
+						die("Got more than one constant table");
+					self.constants_name = name;
+					constants = segment;
+					break;
+				case 'PackfileDebug':
+					if( debug != null )
+						die("Got more than one debug segment");
+					self.debug_name = name;
+					debug = segment;
+					break;
+				default:
+					die("Unknown bytecode segment type: " + typeof(segment));
+				}
+			}
+
+			// Load constants
+			size = constants.num_count();
+			var nums = new 'FixedFloatArray'(size);
+			self.nums = nums;
+			for (i = 0; i < size; i++)
+				nums[i] = float(constants[i]);
+
+			size = constants.pmc_count();
+			var pmcs = new 'FixedPMCArray'(size);
+			self.pmcs = pmcs;
+			for (i = 0; i < size; i++)
+				pmcs[i] = var(constants[i]);
+
+			size = constants.str_count();
+			var strings = new 'FixedStringArray'(size);
+			self.strings = strings;
+			for (i = 0; i < size; i++)
+				strings[i] = string(constants[i]);
+
+			// Load debug mappings
+			size = debug;
+			var debug_files = new 'FixedStringArray'(size);
+			var debug_lines = new 'FixedIntegerArray'(size);
+			self.debug_files = debug_files;
+			self.debug_lines = debug_lines;
+			for (i = 0; i < size; i++) {
+				debug_files[i] = strings[int(var(debug[i]))];
+				debug_lines[i] =         int(var(debug[i]));
+			}
+
+			// Opmap
+			var opmap = bytecode.opmap();
+			size = opmap;
+			var map = new 'FixedStringArray'(size);
+			self.opmap = map;
+			for (i = 0; i < size; i++)
+				map[i] = opmap[i];
+
+			// Bytecode
+			size = elements(bytecode);
+			var ops = new 'FixedIntegerArray'(size);
+			self.bytecode = ops;
+			for (i = 0; i < size; i++)
+				ops[i] = bytecode[i];
+		}
+	}
 }
 
 function print_header(var packfile) {
-	// Pull it into a single hash for simplicity
-	var info = new 'Hash';
-	for( string key in [
-			'wordsize', 'byteorder', 'fptype', 'uuid_type',
-			'version_major', 'version_minor', 'version_patch',
-			'bytecode_major', 'bytecode_minor'
-			] ) {
-		info[key] = int(packfile[key]);
-	}
-	info['uuid'] = string(packfile['uuid']);
+	var info = packfile.header;
 
 	say( 'Core Version    : ', info['version_major'], '.',
 			info['version_minor'], '.', info['version_patch'] );
@@ -29,15 +140,15 @@ function print_header(var packfile) {
 			'.', info['bytecode_minor'] );
 	say( 'UUID (type ', info['uuid_type'], ')   : ', info['uuid'] );
 	say( 'Wordsize ', info['wordsize'],
-		'  Byteorder ', info['byteorder'],
-		'  Floattype ', info['fptype'] );
+			'  Byteorder ', info['byteorder'],
+			'  Floattype ', info['fptype'] );
 }
 
-function bytecode_segment(var segment) {
+function bytecode_segment(var packfile) {
 	say( '   Opmap:' );
 	// XXX: PMCs missing oplib information
-	var opmap = segment.opmap();
-	int i, size = opmap;
+	var opmap = packfile.opmap;
+	int i, size = elements(opmap);
 	for (i = 0; i < size; i++)
 		say( '      ', i, ': ', opmap[i] );
 
@@ -46,31 +157,38 @@ function bytecode_segment(var segment) {
 	//  - opcount, types, jump
 	say( '   Bytecode:' );
 	print( '      ' );
-	size = elements(segment);
-	for (i = 0; i < size; i++)
-		print( segment[i], ', ' );
+	var bytecode = packfile.bytecode;
+	size = elements(bytecode);
+	if( size > 0 )
+		print( bytecode[0] );
+	for (i = 1; i < size; i++)
+		print( ', ', bytecode[i] );
 	say();
 }
 
-function constant_table(var segment) {
+function constant_table(var packfile) {
+	var arr;
 	int i, size;
 
-	size = segment.num_count();
+	arr = packfile.nums;
+	size = elements(arr);
 	say( '   ', size, ' numeric constants:' );
 	for (i = 0; i < size; i++)
-		say( '      ', i, ': ', float(segment[i]) );
+		say( '      ', i, ': ', arr[i] );
 
-	size = segment.str_count();
+	arr = packfile.strings;
+	size = elements(arr);
 	say( '   ', size, ' string constants:' );
 	for (i = 0; i < size; i++) {
-		string s = segment[i];
+		string s = arr[i];
 		say( '      ', i, ' (', encoding_name(s), '): ', s );
 	}
 
-	size = segment.pmc_count();
+	arr = packfile.pmcs;
+	size = elements(arr);
 	say( '   ', size, ' pmc constants:' );
 	for (i = 0; i < size; i++) {
-		var c = segment[i];
+		var c = arr[i];
 		string type = typeof(c);
 		print( '      ', i, ' (', type, '): ' );
 		switch(type) {
@@ -93,15 +211,14 @@ function constant_table(var segment) {
 	}
 }
 
-function debug_segment(var segment) {
-	int size = segment;
+function debug_segment(var packfile) {
+	var debug_files = packfile.debug_files;
+	var debug_lines = packfile.debug_lines;
+	int size = elements(debug_files);
+
 	say( '   ', size, ' debug mappings:' );
-	for (int i = 0; i < size; i++) {
-		// XXX: Seems to output line for filename?
-		string file = segment[i];
-		int line = var(segment[i]);
-		say( '      ', i, ': ', file, ' ', line );
-	}
+	for (int i = 0; i < size; i++)
+		say( '      ', i, ': ', debug_files[i], ' ', debug_lines[i] );
 }
 
 function main[main](var argv) {
@@ -116,37 +233,19 @@ function main[main](var argv) {
 	// Get a Packfile
 	var packfile;
 	try {
-		packfile = get_packfile(filename);
+		packfile = new PACT.Packfile(filename);
 	} catch (e) {
 		cry( progname, ': Error reading packfile ', filename );
 		cry(e);
 		exit(1);
 	}
 
-	// Basic information
 	print_header(packfile);
-
-	// Directory
-	var directory = packfile.get_directory();
 	say();
-	say( elements(directory), ' segments:') ;
-	for( var segname in directory ) {
-		var segment = directory[segname];
-		string type = typeof(segment);
-
-		say( segname );
-		switch(type) {
-		case 'PackfileBytecodeSegment':
-			bytecode_segment(segment);
-			break;
-		case 'PackfileConstantTable':
-			constant_table(segment);
-			break;
-		case 'PackfileDebug':
-			debug_segment(segment);
-			break;
-		default:
-			say( '   Unknown segment type ', type );
-		}
-	}
+	say(packfile.constants_name);
+	constant_table(packfile);
+	say(packfile.debug_name);
+	debug_segment(packfile);
+	say(packfile.bytecode_name);
+	bytecode_segment(packfile);
 }
