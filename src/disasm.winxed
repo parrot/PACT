@@ -181,7 +181,7 @@ function constant_table(var packfile) {
 	say( '   ', size, ' string constants:' );
 	for (i = 0; i < size; i++) {
 		string s = arr[i];
-		say( '      ', i, ' (', encoding_name(s), '): ', s );
+		say( '      ', i, ' (', encoding_name(s), '): "', escape(s), '"' );
 	}
 
 	arr = packfile.pmcs;
