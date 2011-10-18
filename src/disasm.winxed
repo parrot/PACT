@@ -24,6 +24,7 @@ namespace PACT {
 		var debug_lines;
 
 		// Bytecode information
+		var oplibs;
 		var opmap;
 		var bytecode;
 
@@ -136,10 +137,13 @@ namespace PACT {
 			// Opmap
 			var opmap = bytecode.opmap();
 			size = opmap;
-			var map = new 'FixedStringArray'(size);
+			var map = new 'FixedPMCArray'(size);
 			self.opmap = map;
-			for (i = 0; i < size; ++i)
-				map[i] = opmap[i];
+			for (i = 0; i < size; ++i) {
+				string name = opmap[i];
+				map[i] = opmap[name];
+			}
+			self.oplibs = opmap.oplibs();
 
 			// Bytecode
 			size = elements(bytecode);
@@ -165,12 +169,18 @@ function print_header(var packfile) {
 }
 
 function bytecode_segment(var packfile) {
+	int i, size;
+
+	say( '   Oplibs:' );
+	var oplibs = packfile.oplibs;
+	for (string name in oplibs)
+		say( '      ', name, ' ', oplibs[name].version() );
+
 	say( '   Opmap:' );
-	// XXX: PMCs missing oplib information
 	var opmap = packfile.opmap;
-	int i, size = elements(opmap);
+	size = elements(opmap);
 	for (i = 0; i < size; ++i)
-		say( '      ', i, ': ', opmap[i] );
+		say( '      ', i, ': ', opmap[i], ' ', elements(opmap[i]) );
 
 	// TODO: disassemble integers into bytecode information
 	// XXX: Useful information in op_info_table, missing from PMCs
