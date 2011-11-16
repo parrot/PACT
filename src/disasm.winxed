@@ -173,8 +173,14 @@ function bytecode_segment(var packfile) {
 
 	say( '   Oplibs:' );
 	var oplibs = packfile.oplibs;
-	for (string name in oplibs)
-		say( '      ', name, ' ', oplibs[name].version() );
+	for (string name in oplibs) {
+		var version = oplibs[name].version();
+		print( '      ', name, ' ', version[0] );
+		size = elements(version);
+		for(i = 1; i < size; ++i)
+			print( '.', version[i] );
+		say();
+	}
 
 	say( '   Opmap:' );
 	var opmap = packfile.opmap;
