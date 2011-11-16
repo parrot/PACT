@@ -355,10 +355,30 @@ function annotations_segment(var packfile) {
 	say( '   ', size, ' annotations:' );
 	for (int i = 0; i < size; ++i) {
 		var annotation = annotations[i];
+
 		int offset = annotation.get_offset();
 		string name = annotation.get_name();
-		// XXX: No way to determine value type
-		say( '      ', offset, ': ', name );
+		print( '      ', offset, ' ', name, ': ' );
+
+		switch (annotation.get_type()) {
+		case TYPE_INT:
+			say(int(annotation));
+			break;
+
+		case TYPE_STR:
+			string s = annotation;
+			say(encoding_name(s), ':"', escape(s), '"' );
+			break;
+
+		case TYPE_PMC:
+			var val = annotation.get_pmc_value();
+			print( '(', typeof(val), '): ' );
+			try {
+				say(val);
+			} catch () {
+				say('<Unprintable>');
+			}
+		}
 	}
 }
 
