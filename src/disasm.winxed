@@ -365,7 +365,7 @@ function annotations_segment(var packfile) {
 function main[main](var argv) {
 	// Process arguments
 	string progname = argv[0];
-	if (int(argv) != 2) {
+	if (elements(argv) != 2) {
 		cry('Usage: ', progname, ' <PBC file>');
 		exit(1);
 	}
