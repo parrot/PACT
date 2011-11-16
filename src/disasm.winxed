@@ -316,6 +316,17 @@ function constant_table(var packfile) {
 		var c = arr[i];
 		string type = typeof(c);
 		print( '      ', i, ' (', type, '): ' );
+
+		if( c instanceof 'Sub' ) {
+			say(c);
+			print( '         ' );
+			print( ' PC ', c.start_offs(), '-', c.end_offs() );
+			// TODO: multi, outer, arity, flags
+			say();
+
+			continue;
+		}
+
 		try {
 			say(c);
 		} catch () {
