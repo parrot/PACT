@@ -369,12 +369,13 @@ function main[main](var argv) {
 
 	print_header(packfile);
 	say();
-	say(packfile.constants_name);
+	say('Segments:');
+	say(' Constants: ', packfile.constants_name);
 	constant_table(packfile);
-	say(packfile.debug_name);
+	say(' Debug: ', packfile.debug_name);
 	debug_segment(packfile);
-	say(packfile.annotations_name);
+	say(' Annotations: ', packfile.annotations_name);
 	annotations_segment(packfile);
-	say(packfile.bytecode_name);
+	say(' Bytecode: ', packfile.bytecode_name);
 	bytecode_segment(packfile);
 }
