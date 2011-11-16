@@ -168,6 +168,61 @@ function print_header(var packfile) {
 			'  Floattype ', info['fptype'] );
 }
 
+// TODO: See if there is an include file for these already.
+const int
+    TYPE_INT = 0,
+    TYPE_STR = 1,
+    TYPE_PMC = 2,
+    TYPE_NUM = 3,
+    TYPE_CONST = 0x10,
+    TYPE_KEYED = 0x20;
+
+function print_arg(var packfile, int type, int arg, int pc) {
+	int cons = type & TYPE_CONST;
+	int keyd = type & TYPE_KEYED;
+	type = type & ~(TYPE_CONST | TYPE_KEYED);
+
+	if(keyd) print( '[' );
+
+	if(cons) {
+		switch(type) {
+		case TYPE_INT:
+			print(arg);
+			break;
+
+		case TYPE_STR:
+			string str = packfile.strings[arg];
+			string enc = encoding_name(str);
+			print( enc, ':"', escape(str), '"' );
+			break;
+
+		case TYPE_PMC:
+			print('PMC(', arg, ')');
+			break;
+
+		case TYPE_NUM:
+			print(packfile.nums[arg]);
+			break;
+
+		default:
+			die( 'Unknown constant type ' + type + ' at PC ' + pc );
+		}
+	} else {
+		string reg;
+		switch(type) {
+		case TYPE_INT: reg = '$I'; break;
+		case TYPE_STR: reg = '$S'; break;
+		case TYPE_PMC: reg = '$P'; break;
+		case TYPE_NUM: reg = '$N'; break;
+		default:
+			die( 'Unknown register type ' + type + ' at PC ' + pc );
+		}
+		print(reg, arg);
+	}
+
+	if(keyd) print( ']' );
+}
+
 function bytecode_segment(var packfile) {
 	int i, size;
 
@@ -188,18 +243,52 @@ function bytecode_segment(var packfile) {
 	for (i = 0; i < size; ++i)
 		say( '      ', i, ': ', opmap[i], ' ', elements(opmap[i]) );
 
-	// TODO: disassemble integers into bytecode information
-	// XXX: Useful information in op_info_table, missing from PMCs
-	//  - opcount, types, jump
 	say( '   Bytecode:' );
-	print( '      ' );
 	var bytecode = packfile.bytecode;
 	size = elements(bytecode);
-	if( size > 0 )
-		print( bytecode[0] );
-	for (i = 1; i < size; ++i)
-		print( ', ', bytecode[i] );
-	say();
+
+	for(i = 0; i < size; ++i) {
+		var op = opmap[bytecode[i]];
+		string name = op.family_name();
+		print( '      ', name );
+
+		int space = 20 - length(name);
+		if( space <= 0 ) space = 1;
+		for(; space > 0; --space)
+			print( ' ' );
+
+		int j, args;
+		switch(name) {
+			case 'set_args':
+			case 'get_results':
+			case 'get_params':
+			case 'set_returns':
+				// Loop over FIA const
+				var arg_types = packfile.pmcs[bytecode[++i]];
+				args = elements(arg_types);
+
+				print( '(' );
+				for( j = 0; j < args; ++j ) {
+					++i;
+					if( j > 0 ) print( ', ' );
+
+					print_arg(packfile, int(arg_types[j]), bytecode[i], i);
+				}
+				print( ')' );
+				break;
+
+			default:
+				args = elements(op);
+				for(j = 0; j < args; ++j) {
+					++i;
+					if( j > 0 ) print( ', ' );
+
+					print_arg(packfile, int(op[j]), bytecode[i], i);
+				}
+		}
+
+		say();
+	}
 }
 
 function constant_table(var packfile) {
