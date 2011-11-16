@@ -250,7 +250,7 @@ function bytecode_segment(var packfile) {
 	for(i = 0; i < size; ++i) {
 		var op = opmap[bytecode[i]];
 		string name = op.family_name();
-		print( '      ', name );
+		print( '      ', sprintf('%3d', [i] ), ': ', name );
 
 		int space = 20 - length(name);
 		if( space <= 0 ) space = 1;
