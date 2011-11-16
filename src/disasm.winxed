@@ -32,7 +32,7 @@ namespace PACT {
 			// Often used variable
 			int size, i;
 
-			if( packfile instanceof 'String' ) {
+			if ( packfile instanceof 'String' ) {
 				string name = packfile;
 				packfile = new 'Packfile';
 				var file = open(name);
@@ -41,13 +41,13 @@ namespace PACT {
 				file.close();
 			}
 
-			if( !(packfile instanceof 'Packfile') )
+			if ( !(packfile instanceof 'Packfile') )
 				die("Need a PBC filename or Packfile PMC");
 
 			// Extract header information
 			var header;
 			self.header = header = new 'Hash';
-			for( string key in [
+			for ( string key in [
 					'wordsize', 'byteorder', 'fptype', 'uuid_type',
 					'version_major', 'version_minor', 'version_patch',
 					'bytecode_major', 'bytecode_minor'
@@ -63,29 +63,29 @@ namespace PACT {
 
 			// Find the segments
 			var directory = packfile.get_directory();
-			for( string name in directory ) {
+			for ( string name in directory ) {
 				var segment = directory[name];
 				switch(typeof(segment)) {
 				case 'PackfileAnnotations':
-					if( annotations != null )
+					if ( annotations != null )
 						die("Got more than one annotation segment");
 					self.annotations_name = name;
 					annotations = segment;
 					break;
 				case 'PackfileBytecodeSegment':
-					if( bytecode != null )
+					if ( bytecode != null )
 						die("Got more than one bytecode segment");
 					self.bytecode_name = name;
 					bytecode = segment;
 					break;
 				case 'PackfileConstantTable':
-					if( constants != null )
+					if ( constants != null )
 						die("Got more than one constant table");
 					self.constants_name = name;
 					constants = segment;
 					break;
 				case 'PackfileDebug':
-					if( debug != null )
+					if ( debug != null )
 						die("Got more than one debug segment");
 					self.debug_name = name;
 					debug = segment;
@@ -182,9 +182,9 @@ function print_arg(var packfile, int type, int arg, int pc) {
 	int keyd = type & TYPE_KEYED;
 	type = type & ~(TYPE_CONST | TYPE_KEYED);
 
-	if(keyd) print( '[' );
+	if (keyd) print( '[' );
 
-	if(cons) {
+	if (cons) {
 		switch(type) {
 		case TYPE_INT:
 			print(arg);
@@ -220,7 +220,7 @@ function print_arg(var packfile, int type, int arg, int pc) {
 		print(reg, arg);
 	}
 
-	if(keyd) print( ']' );
+	if (keyd) print( ']' );
 }
 
 function bytecode_segment(var packfile) {
@@ -232,7 +232,7 @@ function bytecode_segment(var packfile) {
 		var version = oplibs[name].version();
 		print( '      ', name, ' ', version[0] );
 		size = elements(version);
-		for(i = 1; i < size; ++i)
+		for (i = 1; i < size; ++i)
 			print( '.', version[i] );
 		say();
 	}
@@ -247,14 +247,14 @@ function bytecode_segment(var packfile) {
 	var bytecode = packfile.bytecode;
 	size = elements(bytecode);
 
-	for(i = 0; i < size; ++i) {
+	for (i = 0; i < size; ++i) {
 		var op = opmap[bytecode[i]];
 		string name = op.family_name();
 		print( '      ', sprintf('%3d', [i] ), ': ', name );
 
 		int space = 20 - length(name);
-		if( space <= 0 ) space = 1;
-		for(; space > 0; --space)
+		if ( space <= 0 ) space = 1;
+		for (; space > 0; --space)
 			print( ' ' );
 
 		int j, args;
@@ -268,9 +268,9 @@ function bytecode_segment(var packfile) {
 				args = elements(arg_types);
 
 				print( '(' );
-				for( j = 0; j < args; ++j ) {
+				for ( j = 0; j < args; ++j ) {
 					++i;
-					if( j > 0 ) print( ', ' );
+					if ( j > 0 ) print( ', ' );
 
 					print_arg(packfile, int(arg_types[j]), bytecode[i], i);
 				}
@@ -279,9 +279,9 @@ function bytecode_segment(var packfile) {
 
 			default:
 				args = elements(op);
-				for(j = 0; j < args; ++j) {
+				for (j = 0; j < args; ++j) {
 					++i;
-					if( j > 0 ) print( ', ' );
+					if ( j > 0 ) print( ', ' );
 
 					print_arg(packfile, int(op[j]), bytecode[i], i);
 				}
@@ -317,7 +317,7 @@ function constant_table(var packfile) {
 		string type = typeof(c);
 		print( '      ', i, ' (', type, '): ' );
 
-		if( c instanceof 'Sub' ) {
+		if ( c instanceof 'Sub' ) {
 			say(c);
 			print( '         ' );
 			print( ' PC ', c.start_offs(), '-', c.end_offs() );
