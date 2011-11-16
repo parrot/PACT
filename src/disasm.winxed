@@ -65,7 +65,7 @@ namespace PACT {
 			var directory = packfile.get_directory();
 			for ( string name in directory ) {
 				var segment = directory[name];
-				switch(typeof(segment)) {
+				switch (typeof(segment)) {
 				case 'PackfileAnnotations':
 					if ( annotations != null )
 						die("Got more than one annotation segment");
@@ -185,7 +185,7 @@ function print_arg(var packfile, int type, int arg, int pc) {
 	if (keyd) print( '[' );
 
 	if (cons) {
-		switch(type) {
+		switch (type) {
 		case TYPE_INT:
 			print(arg);
 			break;
@@ -212,7 +212,7 @@ function print_arg(var packfile, int type, int arg, int pc) {
 		}
 	} else {
 		string reg;
-		switch(type) {
+		switch (type) {
 		case TYPE_INT: reg = '$I'; break;
 		case TYPE_STR: reg = '$S'; break;
 		case TYPE_PMC: reg = '$P'; break;
@@ -261,7 +261,7 @@ function bytecode_segment(var packfile) {
 			print( ' ' );
 
 		int j, args;
-		switch(name) {
+		switch (name) {
 			case 'set_args':
 			case 'get_results':
 			case 'get_params':
