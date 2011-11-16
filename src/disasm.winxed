@@ -201,7 +201,10 @@ function print_arg(var packfile, int type, int arg, int pc) {
 			break;
 
 		case TYPE_NUM:
-			print(packfile.nums[arg]);
+			string out = packfile.nums[arg];
+			if ( indexof(out, '.') < 0 )
+				out += '.0';
+			print( out );
 			break;
 
 		default:
