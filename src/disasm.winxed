@@ -98,11 +98,13 @@ namespace PACT {
 
 			// Load annotations
 			// TODO: Don't just hang onto the PackfileAnnotation
-			size = elements(annotations);
-			var annos = new 'FixedPMCArray'(size);
-			self.annotations = annos;
-			for (i = 0; i < size; ++i)
-				annos[i] = annotations[i];
+            if (annotations != null) {
+                size = elements(annotations);
+                var annos = new 'FixedPMCArray'(size);
+                self.annotations = annos;
+                for (i = 0; i < size; ++i)
+                    annos[i] = annotations[i];
+            }
 
 			// Load constants
 			size = constants.num_count();
@@ -397,7 +399,9 @@ function main[main](var argv) {
 		packfile = new PACT.Packfile(filename);
 	} catch (e) {
 		cry( progname, ': Error reading packfile ', filename );
-		cry(e);
+        cry( e.message );
+        for ( string bt in e.backtrace_strings() )
+            cry(bt);
 		exit(1);
 	}
 
@@ -408,8 +412,10 @@ function main[main](var argv) {
 	constant_table(packfile);
 	say(' Debug: ', packfile.debug_name);
 	debug_segment(packfile);
-	say(' Annotations: ', packfile.annotations_name);
-	annotations_segment(packfile);
+    if (packfile.annotations_name != null) {
+        say(' Annotations: ', packfile.annotations_name);
+        annotations_segment(packfile);
+    }
 	say(' Bytecode: ', packfile.bytecode_name);
 	bytecode_segment(packfile);
 }
