@@ -18,6 +18,7 @@ namespace PACT {
 		var nums;
 		var pmcs;
 		var strings;
+        var subs;
 
 		// Debug mappings
 		var debug_files;
@@ -115,9 +116,23 @@ namespace PACT {
 
 			size = constants.pmc_count();
 			var pmcs = new 'FixedPMCArray'(size);
+            var subs = [];
 			self.pmcs = pmcs;
-			for (i = 0; i < size; ++i)
-				pmcs[i] = var(constants[i]);
+            self.subs = subs;
+			for (i = 0; i < size; ++i) {
+                var c = var(constants[i]);
+				pmcs[i] = c;
+                if (c instanceof 'Sub')
+                    push(subs, c);
+            }
+            // Make sure the subs are sorted according to the code offsets
+            subs.sort(function(a, b) {
+                int a_i = a.start_offs();
+                int b_i = b.start_offs();
+                if (a_i == b_i) return 0;
+                if (a_i < b_i) return -1;
+                return 1;
+            });
 
 			size = constants.str_count();
 			var strings = new 'FixedStringArray'(size);
@@ -252,7 +267,8 @@ function print_arg(var packfile, int type, int arg, int pc, int had_named) {
 }
 
 function bytecode_segment(var packfile) {
-	int i, size;
+	int i, size, sub_idx = -1, sub_start_idx, sub_end_idx = -1;
+    var current_sub;
 
 	say( '   Oplibs:' );
 	var oplibs = packfile.oplibs;
@@ -276,6 +292,14 @@ function bytecode_segment(var packfile) {
 	size = elements(bytecode);
 
 	for (i = 0; i < size; ++i) {
+        if (i >= sub_end_idx) {
+            sub_idx++;
+            current_sub = packfile.subs[sub_idx];
+            sub_start_idx = current_sub.start_offs();
+            sub_end_idx = current_sub.end_offs();
+        }
+        if (i == sub_start_idx) say(sprintf('      Subroutine: %s (%d - %d)', [current_sub, sub_start_idx, sub_end_idx]));
+
 		var op = opmap[bytecode[i]];
 		string name = op.family_name();
 		print( '      ', sprintf('%3d', [i] ), ': ', name );
