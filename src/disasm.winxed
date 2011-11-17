@@ -354,6 +354,13 @@ function print_pmc_constant(var packfile, int i)
 		return;
 	}
 
+	if ( c instanceof 'Key' ) {
+		print( '[...]' );
+		// TODO: Examine a key
+		// XXX: Keys need better introspection: type, registers
+		return;
+	}
+
 	try {
 		print(c);
 	} catch () {
