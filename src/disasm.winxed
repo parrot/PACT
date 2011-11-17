@@ -18,7 +18,7 @@ namespace PACT {
 		var nums;
 		var pmcs;
 		var strings;
-        var subs;
+		var subs;
 
 		// Debug mappings
 		var debug_files;
@@ -99,13 +99,13 @@ namespace PACT {
 
 			// Load annotations
 			// TODO: Don't just hang onto the PackfileAnnotation
-            if (annotations != null) {
-                size = elements(annotations);
-                var annos = new 'FixedPMCArray'(size);
-                self.annotations = annos;
-                for (i = 0; i < size; ++i)
-                    annos[i] = annotations[i];
-            }
+			if (annotations != null) {
+				size = elements(annotations);
+				var annos = new 'FixedPMCArray'(size);
+				self.annotations = annos;
+				for (i = 0; i < size; ++i)
+					annos[i] = annotations[i];
+			}
 
 			// Load constants
 			size = constants.num_count();
@@ -116,23 +116,23 @@ namespace PACT {
 
 			size = constants.pmc_count();
 			var pmcs = new 'FixedPMCArray'(size);
-            var subs = [];
+			var subs = [];
 			self.pmcs = pmcs;
-            self.subs = subs;
+			self.subs = subs;
 			for (i = 0; i < size; ++i) {
-                var c = var(constants[i]);
+				var c = var(constants[i]);
 				pmcs[i] = c;
-                if (c instanceof 'Sub')
-                    push(subs, c);
-            }
-            // Make sure the subs are sorted according to the code offsets
-            subs.sort(function(a, b) {
-                int a_i = a.start_offs();
-                int b_i = b.start_offs();
-                if (a_i == b_i) return 0;
-                if (a_i < b_i) return -1;
-                return 1;
-            });
+				if (c instanceof 'Sub')
+					push(subs, c);
+			}
+			// Make sure the subs are sorted according to the code offsets
+			subs.sort(function(a, b) {
+				int a_i = a.start_offs();
+				int b_i = b.start_offs();
+				if (a_i == b_i) return 0;
+				if (a_i < b_i) return -1;
+				return 1;
+			});
 
 			size = constants.str_count();
 			var strings = new 'FixedStringArray'(size);
@@ -187,27 +187,27 @@ function print_header(var packfile) {
 
 // TODO: See if there is an include file for these already.
 const int
-    TYPE_INT = 0,
-    TYPE_STR = 1,
-    TYPE_PMC = 2,
-    TYPE_NUM = 3,
-    TYPE_MASK  = 0x0F,
+	TYPE_INT = 0,
+	TYPE_STR = 1,
+	TYPE_PMC = 2,
+	TYPE_NUM = 3,
+	TYPE_MASK  = 0x0F,
 
-    TYPE_CONST     = 0x0010,
-    TYPE_KEYED     = 0x0020, // :flatten or :slurpy
-    TYPE_OPTIONAL  = 0x0080,
-    TYPE_OPT_FLAG  = 0x0100,
-    TYPE_NAME      = 0x0200,
-    TYPE_LOOKAHEAD = 0x0400,
-    TYPE_INVOCANT  = 0x0800,
-    TYPE_CALL_SIG  = 0x1000;
+	TYPE_CONST     = 0x0010,
+	TYPE_KEYED     = 0x0020, // :flatten or :slurpy
+	TYPE_OPTIONAL  = 0x0080,
+	TYPE_OPT_FLAG  = 0x0100,
+	TYPE_NAME      = 0x0200,
+	TYPE_LOOKAHEAD = 0x0400,
+	TYPE_INVOCANT  = 0x0800,
+	TYPE_CALL_SIG  = 0x1000;
 
 function print_arg(var packfile, int type, int arg, int pc, int had_named) {
 	int cons = type & TYPE_CONST;
 	int keyd = type & TYPE_KEYED;
-    int named = type & TYPE_NAME;
-    int is_optional = type & TYPE_OPTIONAL;
-    int is_opt_flag = type & TYPE_OPT_FLAG;
+	int named = type & TYPE_NAME;
+	int is_optional = type & TYPE_OPTIONAL;
+	int is_opt_flag = type & TYPE_OPT_FLAG;
 	type = type & TYPE_MASK;
 
 	if (keyd) print( named ? '{' : '[');
@@ -226,7 +226,7 @@ function print_arg(var packfile, int type, int arg, int pc, int had_named) {
 
 		case TYPE_PMC:
 			print('PMC(', arg, ')');
-            print_pmc_constant(packfile, arg);
+			print_pmc_constant(packfile, arg);
 			break;
 
 		case TYPE_NUM:
@@ -252,17 +252,17 @@ function print_arg(var packfile, int type, int arg, int pc, int had_named) {
 		print(reg, arg);
 	}
 
-    if (is_optional) print("(optional)");
-    if (is_opt_flag) print("(opt flag)");
+	if (is_optional) print("(optional)");
+	if (is_opt_flag) print("(opt flag)");
 	if (keyd) print(named ? '}' : ']');
 
-    if (!keyd && named && !had_named) return 1, ' => ';
-    return 0, ', ';
+	if (!keyd && named && !had_named) return 1, ' => ';
+	return 0, ', ';
 }
 
 function bytecode_segment(var packfile) {
 	int i, size, sub_idx = -1, sub_start_idx, sub_end_idx = -1;
-    var current_sub;
+	var current_sub;
 
 	say( '   Oplibs:' );
 	var oplibs = packfile.oplibs;
@@ -286,13 +286,15 @@ function bytecode_segment(var packfile) {
 	size = elements(bytecode);
 
 	for (i = 0; i < size; ++i) {
-        if (i >= sub_end_idx) {
-            sub_idx++;
-            current_sub = packfile.subs[sub_idx];
-            sub_start_idx = current_sub.start_offs();
-            sub_end_idx = current_sub.end_offs();
-        }
-        if (i == sub_start_idx) say(sprintf('      Subroutine: %s (%d - %d)', [current_sub, sub_start_idx, sub_end_idx]));
+		if (i >= sub_end_idx) {
+			sub_idx++;
+			current_sub = packfile.subs[sub_idx];
+			sub_start_idx = current_sub.start_offs();
+			sub_end_idx = current_sub.end_offs();
+		}
+		if (i == sub_start_idx)
+			say(sprintf('      Subroutine: %s (%d - %d)',
+			            [current_sub, sub_start_idx, sub_end_idx]));
 
 		var op = opmap[bytecode[i]];
 		string name = op.family_name();
@@ -314,8 +316,8 @@ function bytecode_segment(var packfile) {
 				args = elements(arg_types);
 
 				print( '(' );
-                string comma = "";
-                int had_named = 0;
+				string comma = "";
+				int had_named = 0;
 				for ( j = 0; j < args; ++j ) {
 					++i;
 					print(comma);
@@ -340,8 +342,8 @@ function bytecode_segment(var packfile) {
 
 function print_pmc_constant(var packfile, int i)
 {
-    var arr = packfile.pmcs;
-    var c = arr[i];
+	var arr = packfile.pmcs;
+	var c = arr[i];
 	string type = typeof(c);
 	print( ' (', type, '): ' );
 
@@ -381,10 +383,10 @@ function constant_table(var packfile) {
 	size = elements(arr);
 	say( '   ', size, ' PMC constants:' );
 	for (i = 0; i < size; ++i) {
-        print('      ', i);
-        print_pmc_constant(packfile, i);
-        say();
-    }
+		print('      ', i);
+		print_pmc_constant(packfile, i);
+		say();
+	}
 }
 
 function debug_segment(var packfile) {
@@ -409,31 +411,31 @@ function annotations_segment(var packfile) {
 		string name = annotation.get_name();
 		print( '      ', offset, ' ', name, ': ' );
 
-        int can_get_type;
-        ${ can can_get_type, annotation, 'get_type' };
-        if (can_get_type) {
-            switch (annotation.get_type()) {
-            case TYPE_INT:
-                say(int(annotation));
-                break;
+		int can_get_type;
+		${ can can_get_type, annotation, 'get_type' };
+		if (can_get_type) {
+			switch (annotation.get_type()) {
+			case TYPE_INT:
+				say(int(annotation));
+				break;
 
-            case TYPE_STR:
-                string s = annotation;
-                say(encoding_name(s), ':"', escape(s), '"' );
-                break;
+			case TYPE_STR:
+				string s = annotation;
+				say(encoding_name(s), ':"', escape(s), '"' );
+				break;
 
-            case TYPE_PMC:
-                var val = annotation.get_pmc_value();
-                print( '(', typeof(val), '): ' );
-                try {
-                    say(val);
-                } catch () {
-                    say('<Unprintable>');
-                }
-            }
-        } else {
-            say("Unknown annotation type");
-        }
+			case TYPE_PMC:
+				var val = annotation.get_pmc_value();
+				print( '(', typeof(val), '): ' );
+				try {
+					say(val);
+				} catch () {
+					say('<Unprintable>');
+				}
+			}
+		} else {
+			say("Unknown annotation type");
+		}
 	}
 }
 
@@ -452,31 +454,31 @@ function main[main](var argv) {
 		packfile = new PACT.Packfile(filename);
 	} catch (e) {
 		cry( progname, ': Error reading packfile ', filename );
-        cry( e.message );
-        for ( string bt in e.backtrace_strings() )
-            cry(bt);
+		cry( e.message );
+		for ( string bt in e.backtrace_strings() )
+			cry(bt);
 		exit(1);
 	}
 
-    try {
-        print_header(packfile);
-        say();
-        say('Segments:');
-        say(' Constants: ', packfile.constants_name);
-        constant_table(packfile);
-        say(' Debug: ', packfile.debug_name);
-        debug_segment(packfile);
-        if (packfile.annotations_name != null) {
-            say(' Annotations: ', packfile.annotations_name);
-            annotations_segment(packfile);
-        }
-        say(' Bytecode: ', packfile.bytecode_name);
-        bytecode_segment(packfile);
-    } catch (e) {
-        cry( progname, ': Error during disassembly ', filename );
-        cry( e.message );
-        for ( string bt in e.backtrace_strings() )
-            cry(bt);
+	try {
+		print_header(packfile);
+		say();
+		say('Segments:');
+		say(' Constants: ', packfile.constants_name);
+		constant_table(packfile);
+		say(' Debug: ', packfile.debug_name);
+		debug_segment(packfile);
+		if (packfile.annotations_name != null) {
+			say(' Annotations: ', packfile.annotations_name);
+			annotations_segment(packfile);
+		}
+		say(' Bytecode: ', packfile.bytecode_name);
+		bytecode_segment(packfile);
+	} catch (e) {
+		cry( progname, ': Error during disassembly ', filename );
+		cry( e.message );
+		for ( string bt in e.backtrace_strings() )
+			cry(bt);
 		exit(1);
-    }
+	}
 }
