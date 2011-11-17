@@ -210,10 +210,7 @@ function print_arg(var packfile, int type, int arg, int pc, int had_named) {
     int is_opt_flag = type & TYPE_OPT_FLAG;
 	type = type & TYPE_MASK;
 
-	if (keyd) {
-        if (named) print( '{' );
-        else print('[');
-    }
+	if (keyd) print( named ? '{' : '[');
 
 	if (cons) {
 		switch (type) {
@@ -229,6 +226,7 @@ function print_arg(var packfile, int type, int arg, int pc, int had_named) {
 
 		case TYPE_PMC:
 			print('PMC(', arg, ')');
+            print_pmc_constant(packfile, arg);
 			break;
 
 		case TYPE_NUM:
@@ -256,13 +254,9 @@ function print_arg(var packfile, int type, int arg, int pc, int had_named) {
 
     if (is_optional) print("(optional)");
     if (is_opt_flag) print("(opt flag)");
-	if (keyd) {
-        if (named) print ('}');
-        else print( ']' );
-    }
-    else if (named && !had_named) {
-        return 1, ' => ';
-    }
+	if (keyd) print(named ? '}' : ']');
+
+    if (!keyd && named && !had_named) return 1, ' => ';
     return 0, ', ';
 }
 
@@ -344,6 +338,27 @@ function bytecode_segment(var packfile) {
 	}
 }
 
+function print_pmc_constant(var packfile, int i)
+{
+    var arr = packfile.pmcs;
+    var c = arr[i];
+	string type = typeof(c);
+	print( ' (', type, '): ' );
+
+	if ( c instanceof 'Sub' ) {
+		print(sprintf("%s (PC %d - %d)", [c, c.start_offs(), c.end_offs()]));
+		// TODO: multi, outer, arity, flags
+
+		return;
+	}
+
+	try {
+		print(c);
+	} catch () {
+		print('<Unprintable>');
+	}
+}
+
 function constant_table(var packfile) {
 	var arr;
 	int i, size;
@@ -366,26 +381,10 @@ function constant_table(var packfile) {
 	size = elements(arr);
 	say( '   ', size, ' PMC constants:' );
 	for (i = 0; i < size; ++i) {
-		var c = arr[i];
-		string type = typeof(c);
-		print( '      ', i, ' (', type, '): ' );
-
-		if ( c instanceof 'Sub' ) {
-			say(c);
-			print( '         ' );
-			print( ' PC ', c.start_offs(), '-', c.end_offs() );
-			// TODO: multi, outer, arity, flags
-			say();
-
-			continue;
-		}
-
-		try {
-			say(c);
-		} catch () {
-			say('<Unprintable>');
-		}
-	}
+        print('      ', i);
+        print_pmc_constant(packfile, i);
+        say();
+    }
 }
 
 function debug_segment(var packfile) {
