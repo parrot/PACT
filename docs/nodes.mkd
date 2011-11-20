@@ -80,7 +80,7 @@ contain the most amount of "magic" and features.
 
 ### Op
 
-The heavy lifter of PAST.  Op means "node that does something with it's
+The heavy lifter of PAST.  Op means "node that does something with its
 children".
 
 *DESIGN DECISION*: Do we want to continue to distinguish ops by a string
