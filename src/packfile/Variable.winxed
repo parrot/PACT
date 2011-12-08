@@ -1,9 +1,19 @@
+// BCG: I would expect the Packfile classes to be too deep for things like
+//      Variables.  I would expect raw Registers instead.
+//      My vision for the Packfile classes was that it would be a PACT-oriented
+//      and simpler method of dealing with packfiles more-or-less as they
+//      are.  Once that's in place we can deal with adding things like
+//      variables and register allocation and the like.
+
 class PACT.Packfile.Variable
 {
     var id;     // A human-readable name for the variable
     var index;  // the actual register index (integer)
     // TODO: It might be nice to store first/last use lifetime information for
     // the register allocator to use.
+    // BCG: I would probably perform a separate lifetime analysis and store the
+    //      data there than relying on the Variable to keep it up to date.
+    //      Also, again with defining common API in the base class.
 }
 
 class PACT.Packfile.Variable.Integer : PACT.Packfile.Variable

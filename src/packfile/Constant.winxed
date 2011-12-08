@@ -1,7 +1,13 @@
+// BCG: These might deserve to be more central types.
+
 class PACT.Packfile.Constant
 {
     var value;
+    // BCG: Probably want to specify a common API to all of them here.
 }
+
+// BCG: We may also want a Key class.  Keys are not terribly friendly to
+//      edit.
 
 class PACT.Packfile.Constant.Integer : PACT.Packfile.Constant
 {
@@ -15,6 +21,11 @@ class PACT.Packfile.Constant.Integer : PACT.Packfile.Constant
         return int(self.value);
     }
 
+    // BCG: We probably want to have a type enum/constants
+    //      String comparison is not speedy.
+    //      Alternative is single character types so we can switch on their ord
+    //      I'd like to get typing right quickly so that all levels can share
+    //      the type information.
     function get_type()
     {
         return "int";

@@ -22,6 +22,7 @@ class PACT.Packfile
         return self.root_ns.get_child_ns(name);
     }
 
+    // BCG: ns optional, perhaps?
     function new_sub(string name, var ns)
     {
         if (ns == null)
@@ -29,6 +30,10 @@ class PACT.Packfile
         var s = new PACT.Packfile.Subroutine(self, name, ns);
     }
 
+    // BCG: I'm not sure I'd worry about a constant table at this level.
+    //      I think the PackfileConstantTable has convenient methods to
+    //      deal with addition and de-dup when we output.
+    //      It's simpler if we don't have to worry about it until then.
     function add_constant(var constant)
     {
         // TODO: We need to de-duplicate. Do we do that on input or do that
@@ -36,6 +41,7 @@ class PACT.Packfile
         push(self.constants, constant);
     }
 
+    // BCG: Again with wanting an inverse and doing it as a stage.
     function get_packfile()
     {
         // TODO: This is the biggie. Create the entire Packfile PMC structure

@@ -1,3 +1,5 @@
+// BCG: Probably also want subs stored in their namespace.
+//      That's not how the packfile is organized, but it's probably more sane.
 class PACT.Packfile.Namespace
 {
     var name;

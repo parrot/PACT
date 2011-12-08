@@ -1,6 +1,9 @@
+// BCG: Do the flags need to be separate classes?
+//      Could they just as sanely be stored in a hash?
+//      Or as variables in subroutine with an array for tags, perhaps?
 class PACT.Packfile.Subroutine.Flag
 {
-
+	// BCG: Subroutine uses name(), which isn't defined here
 }
 
 class PACT.Packfile.Subroutine.Flag.Main : PACT.Packfile.Subroutine.Flag

@@ -15,6 +15,8 @@ class PACT.Packfile.Op
         self.labels = [];
     }
 
+    // BCG: Not sure if results and operands can be separated sanely in
+    // all instances.
     function add_results(var results [slurpy])
     {
         for (var r in results)
@@ -38,6 +40,9 @@ class PACT.Packfile.Op
         push(self.labels, label);
     }
 
+    // BCG: We probably want an inverse of this method as well
+    // BCG: I would probably also do this as a stage rather than
+    //      put the guts in this class.  See docs/stages.mkd
     function get_opcode_pmc()
     {
         // TODO: Create and return a representation of this op expressed in

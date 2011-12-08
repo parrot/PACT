@@ -1,12 +1,15 @@
 class PACT.Packfile.Subroutine
 {
-    var program;
+    var program; // BCG: What is this?  The packfile?
     var ops;
     var name;
     var flags;
     var parent_namespace;
     var annotations;
     var identifier;
+
+	// BCG: This feels like scope-like information that really
+	//      belongs at levels higher than Packfile.
     var variables;
     var temp_variables;
 
@@ -70,6 +73,8 @@ class PACT.Packfile.Subroutine
         }
     }
 
+    // BCG: These feel like they're in the wrong place.
+    //      The subroutine doesn't have to care about constants.
     function get_constant(int i)
     {
         var c = new PACT.Packfile.Constant.Integer(i);
