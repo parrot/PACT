@@ -1,0 +1,76 @@
+class PACT.Packfile.Constant
+{
+    var value;
+}
+
+class PACT.Packfile.Constant.Integer : PACT.Packfile.Constant
+{
+    function Integer(int value)
+    {
+        self.value = value;
+    }
+
+    function get_value()
+    {
+        return int(self.value);
+    }
+
+    function get_type()
+    {
+        return "int";
+    }
+}
+
+class PACT.Packfile.Constant.Number : PACT.Packfile.Constant
+{
+    function Number(float number)
+    {
+        self.value = number;
+    }
+
+    function get_value()
+    {
+        return float(self.value);
+    }
+
+    function get_type()
+    {
+        return "float";
+    }
+}
+
+class PACT.Packfile.Constant.String : PACT.Packfile.Constant
+{
+    function String(string s)
+    {
+        self.value = s;
+    }
+
+    function get_value()
+    {
+        return string(self.value);
+    {
+
+    function get_type()
+    {
+        return "string";
+    }
+}
+
+class PACT.Packfile.Constant.PMC : PACT.Packfile.Constant
+{
+    function PMC(var v)
+    {
+        self.value = v;
+    }
+
+    function get_value()
+    {
+        return self.value;
+    {
+
+    function get_type()
+    {
+        return "pmc";
+    }
+}

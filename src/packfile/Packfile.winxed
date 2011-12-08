@@ -1,0 +1,43 @@
+class PACT.Packfile
+{
+    var subs;
+    var name;
+    var root_ns;
+    var constants;
+
+    function Packfile(string name)
+    {
+        self.name = name;
+        self.root_ns = new PACT.Packfile.Namespace("");
+        self.constants = [];
+    }
+
+    function get_root_ns()
+    {
+        return self.root_ns;
+    }
+
+    function get_namespace(var name)
+    {
+        return self.root_ns.get_child_ns(name);
+    }
+
+    function new_sub(string name, var ns)
+    {
+        if (ns == null)
+            ns = self.root_ns;
+        var s = new PACT.Packfile.Subroutine(self, name, ns);
+    }
+
+    function add_constant(var constant)
+    {
+        // TODO: We need to de-duplicate. Do we do that on input or do that
+        // on output?
+        push(self.constants, constant);
+    }
+
+    function get_packfile()
+    {
+        // TODO: This is the biggie. Create the entire Packfile PMC structure
+    }
+}

@@ -1,0 +1,64 @@
+class PACT.Packfile.Variable
+{
+    var id;     // A human-readable name for the variable
+    var index;  // the actual register index (integer)
+    // TODO: It might be nice to store first/last use lifetime information for
+    // the register allocator to use.
+}
+
+class PACT.Packfile.Variable.Integer : PACT.Packfile.Variable
+{
+    function set_index(int idx)
+    {
+    }
+
+    function get_index()
+    {
+    }
+
+    function set_id(string id)
+    {
+        if (self.id != null && string(self.id) != "")
+            die("Cannot change a variable id once it has been set");
+        self.id = id;
+    }
+
+    function get_id()
+    {
+        string id = self.id;
+        if (id == null || id == "") {
+            id = self.__get_unique_id();
+            self.id = id;
+        }
+        return id;
+    }
+
+    function get_type()
+    {
+        return "int";
+    }
+}
+
+class PACT.Packfile.Variable.Number : PACT.Packfile.Packfile.Variable
+{
+    function get_type()
+    {
+        return "float";
+    }
+}
+
+class PACT.Packfile.Variable.String : PACT.Packfile.Variable
+{
+    function get_type()
+    {
+        return "string";
+    }
+}
+
+class PACT.Packfile.Variable.PMC : PACT.Packfile.Variable
+{
+    function get_type()
+    {
+        return "pmc";
+    }
+}
