@@ -58,8 +58,8 @@ points.  (Perhaps this should standardized to an array of strings.)
 
 ### Default Visit Methods
 
-Stages should generally through unknown types.  Obviously some stages will
-be more strict.
+Stages should generally pass through unknown types.  Obviously some stages
+will be more strict.
 
 	method visit(var node) {
 		return node;

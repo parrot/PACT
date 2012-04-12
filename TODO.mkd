@@ -24,8 +24,8 @@ around, starting from the bytecode and working our way up seems far more
 useful.  The implementation plan looks a little like this:
 
 * Build a set of classes that mirror packfile layout.
-	* Populated with PACT classes like Sub, Op, etc instead of
-	  PackfileConstantTable
+    * Populated with PACT classes like Sub, Op, etc instead of
+      PackfileConstantTable, etc
 * Make that able to produce bytecode and PIR
     * Register allocation
     * Stage structure

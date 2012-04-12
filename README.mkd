@@ -47,7 +47,7 @@ some uses in particular to keep in mind:
 * Alternate lexing/parsing frameworks
 * Including low-level code in high-level <br />
   (Think POST nodes in a PAST tree.  A more structured version of inline
-   nodes)
+   nodes.)
 * Compiling portions of a program.<br />
   (Given a PAST expression, return a POST expression not a full program.)
 
@@ -95,11 +95,11 @@ the ability to perform them should be kept in mind.
 
 ### Round-Trip Code
 
-The generating high quality code is difficult when the output of the
-compiler is opaque.  PASM is a mostly dead format and PIR is often derided
-for both the amount of hidden work it does and its compiler IMCC.  New
-assembly and intermediate formats are required.  These formats should be as
-easy to generate and process as possible.
+Generating high quality code is difficult when the output of the compiler
+is opaque.  PASM is a mostly dead format and PIR is often derided for both
+the amount of hidden work it does and its compiler IMCC.  New assembly and
+intermediate formats are required.  These formats should be as easy to
+generate and process as possible.
 
 The ability to store arbitrary objects in bytecode files means that not
 every PBC can be regenerated faithfully from disassembly, but handling the

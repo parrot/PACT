@@ -2,7 +2,7 @@
 
 PACT is based around the concept of tree transformations.  The High Level
 Language (HLL) handles parsing source text however it wants to and builds
-a PAST tree for PACT to handle.  That tree is converted into several
+as AST tree for PACT to handle.  That tree is converted into several
 intermediate forms before being turned into bytecode, PIR, or executed.
 
 Some level of organization is going to be needed for these.  This document
