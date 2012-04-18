@@ -2,6 +2,9 @@
 
 ## Short Term
 
+Most of the items in this list are the subject of a GSoC 2012 proposal by
+benabik.
+
 * Flesh out design docs where needed <br />
   Input from HLL authors _very_ welcome!
 * But don't get caught up designing things we aren't implementing
@@ -15,6 +18,9 @@ The next steps for that are:
 * Extract Packfile class
 * Setup infrastructure to _build_ said class.
 * Setup test to test said class
+
+`src/packfile/` contains the beginning of a set of classes to handle PBC
+files in a structured way.  It's mostly full of design notes and ideas.
 
 ## Long Term
 
