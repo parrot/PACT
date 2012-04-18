@@ -29,11 +29,18 @@ useful.  The implementation plan looks a little like this:
 * Make that able to produce bytecode and PIR
     * Register allocation
     * Stage structure
-* Build assembly language on top of that
+* Build simple assembly language on top of that
     * assembler and disassembler
+    * Primarily for machine consumption and production
+    * PASM replacement
 * Add control-flow graph primitives (basic blocks linked by conditionals)
-* Build tree-like POST
-* Build PAST
+* Build complex assembly language on top of that
+    * PIR replacement
+    * More human useful features
+* Build AST that compiles to CFG
+* Build simple language on top of that
+    * Example / Squaak replacement
+    * Sanity check
 
 Share as much across layers as possible.  (We want only one
 implementation/type for things like registers, variables, symbol
@@ -42,8 +49,8 @@ tables, location information, etc.)
 Maintain as much type information as possible.  If we start off with an
 integer constant, remember that all the way down to the bytecode.
 
-After that, start building top-down.  Add features to PAST and see if any
-additional POST/CFG/bytecode features are needed to support it.
+After that, start building top-down.  Add features to the AST and see if
+any additional CFG/bytecode features are needed to support it.
 
 ## Languages
 
@@ -57,7 +64,7 @@ once a PACT assembly format stabilizes, it would be possible (and likely
 encouraged) to create a version of the assembler in C to function as a
 replacement for PIR/IMCC as the de facto standard for bootstrapping.
 
-An extended assembly language on top of the opcode tree format would be
+An extended assembly language on top of the control flow graphs would be
 easier for human production and let them use the same standard shortcuts
 the compiler tends to.  Alternatively, this could be a viable target for a
 system-level language like Winxed.
