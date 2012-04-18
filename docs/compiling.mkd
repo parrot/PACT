@@ -11,6 +11,8 @@ stage system was intended to be similar to that of tree-optimizer.
 
 ## Stage
 
+(see Tree::Optimizer::Pass)
+
 A stage is a single transformation of a PACT tree.  It has a name, input
 and output tags, and a new and visit methods.  Given a stage, options, and
 a tree, they are intended to be used as follows:
@@ -98,6 +100,9 @@ those decisions have been worked out ahead of time.  However, it will
 rapidly come to be that we will need support for multiple exclusive output
 formats (Packfile, Eval, PIR, PACT ASM).  Some basic method of handling
 "add these stages if you want target X" will likely be useful.
+
+**More Conjecture:** Tree::Optimizer::Pass includes dependency information.
+This could be brought into PACT's stages for automatic stage resolution.
 
 
 
