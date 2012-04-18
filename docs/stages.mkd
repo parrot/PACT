@@ -1,15 +1,18 @@
-# PACT Compiler Stages
+PACT Compiler Stages
+====================
 
 This document describe possible stages that get composed together into a
 compiler.
 
-## Factories
+Factories
+---------
 
 We may wish to provide factory objects that the core stages use to build
 PACT nodes so that HLLs can specific default option or alter nodes at
 create to inject custom classes.
 
-## Available Stages
+Available Stages
+----------------
 
 First the obviously needed stages:
 

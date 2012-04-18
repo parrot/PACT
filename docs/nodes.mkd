@@ -1,4 +1,5 @@
-# PACT Nodes
+PACT Nodes
+==========
 
 PACT is based around the concept of tree transformations.  The High Level
 Language (HLL) handles parsing source text however it wants to and builds
@@ -14,7 +15,8 @@ at all so that name isn't very good.
 
 
 
-## Layers
+Layers
+------
 
 There are four layers of PACT nodes.
 
@@ -48,7 +50,8 @@ format.  It does use some more abstract concepts like labels.  It may also
 be able to automatically generate constant tables and other meta-data where
 appropriate.
 
-## Common Nodes
+Common Nodes
+------------
 
 Any concept used at multiple layers of PACT should have a single common
 representation.  This may be subclasses at different layers, but we should
@@ -84,7 +87,8 @@ objects.  Things this handles include:
 
 
 
-## AST
+AST
+---
 
 This level contains high level concepts like "for loops", "exception
 handlers", and "lexical variables".  It is intended to be as easy as
@@ -121,7 +125,8 @@ Named blocks only have copies inlined.
 
 
 
-## CFG
+CFG
+---
 
 This level is structured along the lines of the flow of the program.  Each
 sub is represented by a graph of simple blocks that describe the execution
@@ -146,7 +151,8 @@ Conditions at the end of a Block.  A Condition contains a test, generally a
 comparison, and two blocks: one for true and another for false.
 
 
-## Bytecode
+Bytecode
+--------
 
 This level is _exactly_ a 1:1 mapping of nodes to Parrot opcodes.  The
 focus is completely on simplicity of code generation.  Bytecode structures

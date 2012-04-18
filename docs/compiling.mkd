@@ -1,4 +1,5 @@
-# PACT Compiler Structure
+PACT Compiler Structure
+=======================
 
 This document describes the "action" half of PACT, the parts responsible
 for converting PACT trees from one format to another.
@@ -9,7 +10,8 @@ stage system was intended to be similar to that of tree-optimizer.
 
 
 
-## Stage
+Stage
+-----
 
 (see Tree::Optimizer::Pass)
 
@@ -79,7 +81,8 @@ When encountering a PACT node, we should recurse.
 
 
 
-## Stage Runner
+Stage Runner
+------------
 
 (see Tree::Optimizer)
 
@@ -106,7 +109,8 @@ This could be brought into PACT's stages for automatic stage resolution.
 
 
 
-## Compiler
+Compiler
+--------
 
 This class provides the full compiler API from PDD31.  It inherits from the
 stage runner class, and uses it's compile function to implement eval.  The
@@ -118,7 +122,8 @@ likely be available.
 
 
 
-## REPL
+REPL
+----
 
 Given a Compiler object, this class handles maintaining an outer context,
 interacting with the user, printing results, and catching exceptions.  Each
@@ -127,7 +132,8 @@ subclassing.
 
 
 
-## Command Line
+Command Line
+------------
 
 Given a Compiler object, this class performs some basic command line option
 handling, passing options to stages, target to the compiler, saving the

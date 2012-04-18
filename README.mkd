@@ -1,4 +1,5 @@
-# Parrot Alternate Compiler Toolkit
+Parrot Alternate Compiler Toolkit
+=================================
 
 This is a redesign and rebuild of the Parrot Compiler Toolkit (PCT), which
 is installed with Parrot.  PCT provides a quick and easy framework to build
@@ -10,7 +11,8 @@ benabik++'s comments during his Google Summer of Code 2011 project.
 Currently the project is in the planning stages and this repository contains
 notes and design documents.  Assistance, forks, and commentary are welcome!
 
-## Project Goals
+Project Goals
+-------------
 
 * Ease of Hacking
 * Similar to PCT

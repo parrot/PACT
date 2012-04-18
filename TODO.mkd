@@ -1,6 +1,8 @@
-# PACT TODO List
+PACT TODO List
+==============
 
-## Short Term
+Short Term
+----------
 
 Most of the items in this list are the subject of a GSoC 2012 proposal by
 benabik.
@@ -22,7 +24,8 @@ The next steps for that are:
 `src/packfile/` contains the beginning of a set of classes to handle PBC
 files in a structured way.  It's mostly full of design notes and ideas.
 
-## Long Term
+Long Term
+---------
 
 One of the main motivations of PACT is generating bytecode.  Instead of
 starting at the top and trying to ensure we keep everything we'll need
@@ -58,7 +61,8 @@ integer constant, remember that all the way down to the bytecode.
 After that, start building top-down.  Add features to the AST and see if
 any additional CFG/bytecode features are needed to support it.
 
-## Languages
+Languages
+---------
 
 Both as a sanity check and as a kind of textual IR, it would be extremely
 useful to build extremely simple languages on top of several layers of
