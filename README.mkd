@@ -51,7 +51,8 @@ some uses in particular to keep in mind:
   (Think POST nodes in a PAST tree.  A more structured version of inline
    nodes.)
 * Compiling portions of a program.<br />
-  (Given a PAST expression, return a POST expression not a full program.)
+  (Given a PAST expression, return a POST expression not a full program.
+   Particularly useful for REPLs and eval functions.)
 
 ### Test-Driven Development
 

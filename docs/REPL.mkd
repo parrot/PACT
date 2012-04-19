@@ -1,0 +1,98 @@
+Read, Execute, and Print Loops
+==============================
+
+REPLs have some unique requirements from standard compilation:
+
+* Maintaining scope across multiple invocations of the compiler.
+* Compiling small fragments of code (often expressions instead of
+  statements).
+* Automatic processing of results (printing, format, history)
+
+This document describes the issues and some general design ideas for their
+solution, but currently lacks concrete designs.  It should be updated as
+implementing a PACT REPL gets closer to reality.
+
+Scope
+-----
+
+Generally, users of a REPL expect that functions and variables defined in
+one line to be available in successive lines.  Compiling each line as a
+separate program means that all this information is lost.  Therefore, some
+semblance of scope must be maintained through both the compiler and
+evaluation.
+
+Users also generally expect to be able to redeclare variables created in
+the REPL (and possibly those outside, depending on language standards).
+The simplest way to model this behavior is that each line of the REPL
+creates a new scope embedded inside the scope from the previous line.  To
+prevent this nesting from exploding memory requirements, flattening all
+previous scopes to a single "outer" scope for the next line is desired.
+
+### Compiler
+
+Issues of outer scopes need to be handled in compilers constantly.
+However, in this case, we have two particular needs.  First, the compiler
+needs to accept an outer scope as an argument.  Second, the compiler needs
+to output scope information in addition to the code.  This output is what
+gets passed back into the compiler for the next line.  This allows the
+compiler to generate variable and function accesses correctly across lines
+of the REPL.
+
+In addition, the compiler will need to be certain not to store variables in
+registers as we'd like to be able to garbage collect contexts after each
+line.  Likely the compiler should default to using lexical variables or
+storing variables in a context object.
+
+### Evaluation
+
+Not only do the locations of variables and functions need to be preserved
+for the compiler, the actual data needs to be preserved for the user.  The
+"Execute" portion of the REPL will need to handle setting up the context
+for the evaluated code.  This includes ensuing that the correct subroutines
+are available, setting up the lexical environment, and possibly passing and
+saving a context object.
+
+### Custom Lexpad
+
+Parrot's lexical operators (find_lex and store_lex) already use vtable
+functions to access the LexPad PMC.  It may be useful to create a custom
+LexPad to store variables inside of a hash (or a hash per type) instead of
+registers.  This makes handling variables in a REPL identical to handling
+lexical variables to the compiler and ensures that all data is updated
+properly.
+
+
+
+Fragment Compilation
+--------------------
+
+Generally a REPL is compiling far smaller units than a normal program.
+Users expect to able to write a single expression rather than a full
+program.  Compiler writers will need to be able to handle that in their
+parsers and call the appropriate hooks from the REPL.
+
+This is also related to the idea that the PAST::AST compiler should be very
+liberal in the code that it accepts.  Given a bare expression, it should
+output an unnamed subroutine that runs the given code and returns the
+result.  This implies that subroutines, the call to return, and other
+standard boilerplate are automatically handled by PACT.  There should be
+hooks to make it simple for HLLs to customize that boilerplate as well.
+
+
+
+Processing Results
+------------------
+
+Once the code has been compiled and run, the final section of the loop is
+to print the results.  The REPL will have to determine the type and number
+of results and handle them appropriately.  (Remember that PCC allows for
+return values to be as complex as parameters.)
+
+Each return value needs to be converted to a string.  There should be
+options for switching between the `get_string` VTABLE, dumper, and a custom
+function to format the output.
+
+REPLs become even more useful when you can refer to old results (i.e.
+`irb`'s `_` and `__[n]`).  Obviously the details of how it is accessed will
+vary per HLL, but the REPL framework should make storing and recalling this
+information easy.

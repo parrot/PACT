@@ -125,6 +125,8 @@ likely be available.
 REPL
 ----
 
+(see REPL.mkd)
+
 Given a Compiler object, this class handles maintaining an outer context,
 interacting with the user, printing results, and catching exceptions.  Each
 major portion of this should be abstracted into a method for easy
