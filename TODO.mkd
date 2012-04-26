@@ -4,25 +4,31 @@ PACT TODO List
 Short Term
 ----------
 
-Most of the items in this list are the subject of a GSoC 2012 proposal by
-benabik.
-
 * Flesh out design docs where needed <br />
   Input from HLL authors _very_ welcome!
 * But don't get caught up designing things we aren't implementing
 * Decide on some coding standards (package names, etc)
-* Build framework: Makefile, test harness, etc
-* Sketch (design and/or code) out lowest level compiler
 
-`src/disasm.winxed` contains the beginnings of a PBC -> PACT disassembler.
-The next steps for that are:
+The following portions of the project are early code, and are planned to be
+replaced this summer:
 
-* Extract Packfile class
-* Setup infrastructure to _build_ said class.
-* Setup test to test said class
+* `src/packfile/` contains the beginning of a set of classes to handle PBC
+   files in a structured way.  It's mostly full of design notes and ideas.
+* `src/disasm.winxed` contains the beginnings of a PBC -> PACT disassembler.
 
-`src/packfile/` contains the beginning of a set of classes to handle PBC
-files in a structured way.  It's mostly full of design notes and ideas.
+Summer of Code 2012
+-------------------
+
+Writing the lowest levels of PACT is a GSoC 2012 project by benabik.  Here's a 
+short list of what will be done:
+
+* Build framework: Makefile, test harness, etc.
+* Classes for the lowest layer of PACT (Packfile).
+* Disassembler for those classes (based on `src/disasm.winxed`)
+* Design a low-level assembly language
+* Implement that language
+
+This roughly corresponds to the first three points on the long-term plan.
 
 Long Term
 ---------
