@@ -341,9 +341,31 @@ function print_pmc_constant(var packfile, int i)
 	}
 
 	if ( c instanceof 'Key' ) {
-		string repr;
-		${ get_repr repr, c };
-		print(repr);
+		print( '[ ' );
+		while ( c != null ) {
+			if (c.is_register_reference()) {
+				print('$');
+				switch(c.get_type()) {
+				case PARROT_ARG_INTVAL:
+					print('I');
+					break;
+				case PARROT_ARG_STRING:
+					print('S');
+					break;
+				case PARROT_ARG_PMC:
+					print('P');
+					break;
+				}
+				print(c.get_register_idx());
+			} else {
+				print(c); // Prints value of current item
+			}
+
+			${ shift c, c };
+			if ( c != null )
+				print(', ');
+		}
+		print( ' ]' );
 		return;
 	}
 
