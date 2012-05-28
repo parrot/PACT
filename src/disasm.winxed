@@ -185,51 +185,37 @@ function print_header(var packfile) {
 			'  Floattype ', info['fptype'] );
 }
 
-// TODO: See if there is an include file for these already.
-const int
-	TYPE_INT = 0,
-	TYPE_STR = 1,
-	TYPE_PMC = 2,
-	TYPE_NUM = 3,
-	TYPE_MASK  = 0x0F,
-
-	TYPE_CONST     = 0x0010,
-	TYPE_KEYED     = 0x0020, // :flatten or :slurpy
-	TYPE_OPTIONAL  = 0x0080,
-	TYPE_OPT_FLAG  = 0x0100,
-	TYPE_NAME      = 0x0200,
-	TYPE_LOOKAHEAD = 0x0400,
-	TYPE_INVOCANT  = 0x0800,
-	TYPE_CALL_SIG  = 0x1000;
+// Get all the argument type constants for PCC
+$include_const 'call_bits.pasm';
 
 function print_arg(var packfile, int type, int arg, int pc, int had_named) {
-	int cons = type & TYPE_CONST;
-	int keyd = type & TYPE_KEYED;
-	int named = type & TYPE_NAME;
-	int is_optional = type & TYPE_OPTIONAL;
-	int is_opt_flag = type & TYPE_OPT_FLAG;
-	type = type & TYPE_MASK;
+	int cons = type & PARROT_ARG_CONSTANT;
+	int keyd = type & PARROT_ARG_FLATTEN; // :flatten or :slurpy
+	int named = type & PARROT_ARG_NAME;
+	int is_optional = type & PARROT_ARG_OPTIONAL;
+	int is_opt_flag = type & PARROT_ARG_OPT_FLAG;
+	type = type & PARROT_ARG_TYPE_MASK;
 
 	if (keyd) print( named ? '{' : '[');
 
 	if (cons) {
 		switch (type) {
-		case TYPE_INT:
+		case PARROT_ARG_INTVAL:
 			print(arg);
 			break;
 
-		case TYPE_STR:
+		case PARROT_ARG_STRING:
 			string str = packfile.strings[arg];
 			string enc = encoding_name(str);
 			print( enc, ':"', escape(str), '"' );
 			break;
 
-		case TYPE_PMC:
+		case PARROT_ARG_PMC:
 			print('PMC(', arg, ')');
 			print_pmc_constant(packfile, arg);
 			break;
 
-		case TYPE_NUM:
+		case PARROT_ARG_FLOATVAL:
 			string out = packfile.nums[arg];
 			if ( indexof(out, '.') < 0 )
 				out += '.0';
@@ -242,10 +228,10 @@ function print_arg(var packfile, int type, int arg, int pc, int had_named) {
 	} else {
 		string reg;
 		switch (type) {
-		case TYPE_INT: reg = '$I'; break;
-		case TYPE_STR: reg = '$S'; break;
-		case TYPE_PMC: reg = '$P'; break;
-		case TYPE_NUM: reg = '$N'; break;
+		case PARROT_ARG_INTVAL:   reg = '$I'; break;
+		case PARROT_ARG_STRING:   reg = '$S'; break;
+		case PARROT_ARG_PMC:      reg = '$P'; break;
+		case PARROT_ARG_FLOATVAL: reg = '$N'; break;
 		default:
 			die( 'Unknown register type ' + type + ' at PC ' + pc );
 		}
@@ -422,16 +408,16 @@ function annotations_segment(var packfile) {
 		${ can can_get_type, annotation, 'get_type' };
 		if (can_get_type) {
 			switch (annotation.get_type()) {
-			case TYPE_INT:
+			case PARROT_ARG_INTVAL:
 				say(int(annotation));
 				break;
 
-			case TYPE_STR:
+			case PARROT_ARG_STRING:
 				string s = annotation;
 				say(encoding_name(s), ':"', escape(s), '"' );
 				break;
 
-			case TYPE_PMC:
+			case PARROT_ARG_PMC:
 				var val = annotation.get_pmc_value();
 				print( '(', typeof(val), '): ' );
 				try {
