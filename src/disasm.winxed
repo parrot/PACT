@@ -1,4 +1,6 @@
-/* Basic disassembler to explore the Packfile PMCs */
+// Copyright (C) 2011-2012, Parrot Foundation.
+
+// Basic disassembler to explore the Packfile PMCs
 
 namespace PACT {
 	class Packfile {
