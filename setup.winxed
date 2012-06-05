@@ -2,9 +2,6 @@
 
 // Build system for PACT, using Rosella.Winxed.Distutils
 
-$loadlib "io_ops";
-class OS;
-
 function main[main](var argv) {
     int exit_code = 0;
 
