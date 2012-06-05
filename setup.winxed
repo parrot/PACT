@@ -1,0 +1,46 @@
+// Copyright (C) 2012, Parrot Foundation.
+
+// Build system for PACT, using Rosella.Winxed.Distutils
+
+$loadlib "io_ops";
+class OS;
+
+function main[main](var argv) {
+    int exit_code = 0;
+
+    try {
+        // Load and setup Rosella.Winxed.Distutils
+        load_bytecode('rosella/winxed.pbc');
+        Rosella.Winxed.Distutils.winxed_setup();
+
+        // Setup build hash
+        var pact = {
+            'name'             : 'PACT',
+            'abstract'         : 'Parrot Alternate Compiler Toolkit',
+            'authority'        : 'http://github.com/parrot',
+            'copyright_holder' : 'Parrot Foundation',
+            'keywords'         : ['compiler'],
+            'license_type'     : 'Artistic License 2.0',
+            'license_uri'      : 'http://www.perlfoundation.org/artistic_license_2_0',
+            'checkout_uri'     : 'git://github.com/parrot/PACT.git',
+            'browser_uri'      : 'http://github.com/parrot/PACT',
+            'project_uri'      : 'http://github.com/parrot/PACT',
+            'winxed_debug'     : false,
+            'pir_winxed'       : { 'src/disasm.pir': 'src/disasm.winxed' },
+            'pbc_pir'          : { 'src/disasm.pbc': 'src/disasm.pir'    },
+            'installable_pbc'  : { 'pact_disasm':    'src/disasm.pbc'    }
+        };
+
+        // Invoke distutils
+        argv.shift();
+        setup(argv, pact);
+    } catch (e) {
+        say(e['message']);
+        for (string bt in e.backtrace_strings())
+            say(bt);
+        exit_code = 1;
+    }
+
+    if (exit_code != 0)
+        exit(exit_code);
+}
