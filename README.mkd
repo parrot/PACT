@@ -11,6 +11,48 @@ benabik++'s comments during his Google Summer of Code 2011 project.
 Currently the project is in the planning stages and this repository contains
 notes and design documents.  Assistance, forks, and commentary are welcome!
 
+PACT is written in Winxed and requires the
+[Rosella](http://github.com/whiteknight/Rosella) library to build and test.
+However, no dependency on Rosella should be required for the compiled
+library.
+
+Repository Tour
+---------------
+
+### Makefile / setup.winxed
+
+The Makefile is just a thin wrapper around a distutils/Rosella based
+setup.winxed.  You can give either one the following commands:
+
+* `build` (the default): builds all libraries and programs
+* `test`: runs all tests in the the `t/` directory
+* `install`: Installs the libraries and programs in the same location as Parrot
+* `clean`: Removes all libraries, programs, and intermediate files.
+
+### docs
+
+This directory contains Markdown files that are design documents for PACT.
+
+### pact
+
+This directory includes the actual PACT library.  The library is built in
+pieces.  Each section of the library is either a single winxed file or a
+directory containing winxed files that are collected together into a single
+packfile.
+
+### src
+
+This directory includes sources for all the programs created by this
+project.  The resulting executable is prefixed with `pact_` and is based on
+the filename of the source.  At the moment this is just `pact_disasm` which
+is built from `src/disasm.winxed`.
+
+### t
+
+This directory includes the tests for the PACT library.  Each test file
+should end with `.t` and output TAP.  (Generally by way of the Rosella.Test
+library)
+
 Project Goals
 -------------
 
