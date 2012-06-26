@@ -339,6 +339,13 @@ function print_pmc_constant(var packfile, int i)
 		print(sprintf("%s (PC %d - %d)", [c, c.start_offs(), c.end_offs()]));
 		// TODO: multi, outer, arity, flags
 
+		var multi = c.get_multisig();
+		string s;
+		if ( multi != null ) {
+		    ${ get_repr s, multi };
+		    print(' (multi: ', typeof(multi), ' ', s, ')');
+                }
+
 		return;
 	}
 
