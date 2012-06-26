@@ -17,6 +17,12 @@ function installable_winxed(var pact, string name, string prefix) {
     pact['installable_pbc'][name] = prefix+'.pbc';
 }
 
+// Create an installable library from winxed
+function library_winxed(var pact, string prefix) {
+    pbc_winxed(pact, prefix);
+    push(pact['inst_lib'], prefix+'.pbc');
+}
+
 function main[main](var argv) {
     int exit_code = 0;
 
@@ -43,6 +49,7 @@ function main[main](var argv) {
             'installable_pbc'  : {}
         };
 
+        pbc_winxed(pact, 'pact/packfile');
         installable_winxed(pact, 'pact_disasm', 'src/disasm');
 
         // Invoke distutils

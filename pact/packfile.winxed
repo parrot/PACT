@@ -1,0 +1,104 @@
+namespace PACT.Packfile {
+    class Packfile {
+        // Constants
+        var floats;  // RFA
+        var pmcs;    // RPA
+        var strings; // RSA
+
+        // Root namespace
+        var root; // Namespace
+
+        // Main sub
+        var main; // Subroutine
+
+        // Opcode libraries
+        var oplibs; // RSA
+
+        // Functions similar to PackfileView
+    }
+
+    class Namespace {
+        var name;     // String
+        var contents; // Hash
+
+        // Should act hash-like
+    }
+
+    class Constant {
+        var value;
+        var type;  // Integer
+
+        // init and set from all types
+    }
+
+    namespace Constant {
+        // A reference to something in the constants table
+        class Reference : Constant {
+            // uses value as an index into a table
+            var packfile; // needs this for lookups
+
+            // dereference
+        }
+
+        class Key : Constant {
+            // value is an RPA used to build a Key PMC
+
+            // convert to/from Key
+        }
+    }
+
+    // Below are found in Namespace.contents
+
+    class Subroutine {
+        var name;      // String
+        var ops;       // RPA
+        var flags;     // Hash
+        var multi_sig; // FPA or null
+
+        // argument information, all Integers
+        var positional_required;
+        var positional_optional;
+        var positional_slurpy;
+        var named_required;
+        var named_optional;
+        var named_slurpy;
+
+        // Registers used
+        var registers; // FIA, ordered based on type flag
+    }
+
+    class Multi {
+        var name;      // String
+        var canidates; // RPA
+    }
+
+    // Below are in Subroutine.ops
+
+    class Op {
+        var name; // String
+        var pc;   // Integer
+        var line; // Integer, for debug segment
+        var args; // RPA
+    }
+
+    class Label {
+        var name; // String
+        var pc;   // Integer
+    }
+
+    class Register {
+        var type;   // Integer, from call_bits
+        var number; // Integer
+    }
+
+    class Annotation {
+        var name;  // String
+        var value; // Constant
+        var pc;    // Integer
+    }
+
+    class Debug {
+        var filename; // String
+        var pc;       // Integer
+    }
+}
