@@ -2,6 +2,21 @@
 
 // Build system for PACT, using Rosella.Winxed.Distutils
 
+////// Helpers to add a series of steps for a file.
+// Prefix arguments should not have .winxed, .pir, etc
+
+// Convert winxed file to a packfile
+function pbc_winxed(var pact, string prefix) {
+    pact['pir_winxed'][prefix+'.pir'] = prefix+'.winxed';
+    pact['pbc_pir'   ][prefix+'.pbc'] = prefix+'.pir';
+}
+
+// Create an installable program from winxed
+function installable_winxed(var pact, string name, string prefix) {
+    pbc_winxed(pact, prefix);
+    pact['installable_pbc'][name] = prefix+'.pbc';
+}
+
 function main[main](var argv) {
     int exit_code = 0;
 
@@ -23,10 +38,12 @@ function main[main](var argv) {
             'browser_uri'      : 'http://github.com/parrot/PACT',
             'project_uri'      : 'http://github.com/parrot/PACT',
             'winxed_debug'     : false,
-            'pir_winxed'       : { 'src/disasm.pir': 'src/disasm.winxed' },
-            'pbc_pir'          : { 'src/disasm.pbc': 'src/disasm.pir'    },
-            'installable_pbc'  : { 'pact_disasm':    'src/disasm.pbc'    }
+            'pir_winxed'       : {},
+            'pbc_pir'          : {},
+            'installable_pbc'  : {}
         };
+
+        installable_winxed(pact, 'pact_disasm', 'src/disasm');
 
         // Invoke distutils
         argv.shift();
