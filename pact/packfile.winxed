@@ -122,6 +122,12 @@ namespace PACT.Packfile {
             // uses value as an index into a table
             var packfile; // needs this for lookups
 
+            function Reference(var packfile, int type, var value) {
+                self.type     = type;
+                self.value    = value;
+                self.packfile = packfile;
+            }
+
             // dereference
         }
 
@@ -146,6 +152,11 @@ namespace PACT.Packfile {
         function Subroutine() {
             self.name = null;
             self.ops  = [];
+        }
+
+        function Subroutine(string name) {
+            self.Subroutine();
+            self.name = name;
         }
     }
 
@@ -177,16 +188,35 @@ namespace PACT.Packfile {
     class Register {
         var type;   // Integer, from call_bits
         var number; // Integer
+
+        function Register(int type, int number) {
+            self.type   = type;
+            self.number = number;
+        }
     }
 
     class Annotation {
         var name;  // String
         var value; // Constant
         var pc;    // Integer
+
+        function Annotation(string name, var value) {
+            if (!(value instanceof PACT.Packfile.Constant))
+                die('Annotation value must be a constant');
+            if (value.type == PARROT_ARG_FLOATVAL)
+                die('Annotations can not be floats');
+
+            self.name  = name;
+            self.value = value;
+        }
     }
 
     class Debug {
         var filename; // String
         var pc;       // Integer
+
+        function Debug(string filename) {
+            self.filename = filename;
+        }
     }
 }
