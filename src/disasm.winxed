@@ -301,7 +301,10 @@ function read_packfile(var packfile) {
         case 'get_results':
         case 'get_params':
         case 'set_returns':
-            var arg_types = ret.pmcs[bytecode[++pc]];
+            :PACT.Packfile.Constant.Reference ref(packfile,
+                    PARROT_ARG_PMC, bytecode[++pc]);
+            push(pop.args, ref);
+            var arg_types = ret.pmcs[int(ref.value)];
             argc = elements(arg_types);
             for (i = 0; i < argc; ++i) {
                 ++pc;
