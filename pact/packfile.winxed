@@ -1,34 +1,75 @@
-namespace PACT.Packfile {
-    class Packfile {
-        // Constants
-        var floats;  // RFA
-        var pmcs;    // RPA
-        var strings; // RSA
+$include_const 'call_bits.pasm';
 
-        // Root namespace
-        var root; // Namespace
+// Useful opcodes
+inline get_iter(var obj) return var {
+    var ret;
+    ${ iter ret, obj };
+    return ret;
+}
 
-        // Main sub
-        var main; // Subroutine
+class PACT.Packfile {
+    // Constants
+    var floats;  // RFA
+    var pmcs;    // RPA
+    var strings; // RSA
 
-        // Opcode libraries
-        var oplibs; // RSA
+    // Root namespace
+    var root; // Namespace
 
-        // Functions similar to PackfileView
+    // Main sub
+    var main; // Subroutine
+
+    // Opcode libraries
+    var oplibs; // RPA of OpLibs
+
+    // Header
+    // Most header values can't really be changed, so aren't variables.
+    var uuid_type; // Integer
+    var uuid;      // String
+
+    function Packfile() {
+        self.floats    = new 'ResizableFloatArray';
+        self.pmcs      = new 'ResizablePMCArray';
+        self.strings   = new 'ResizableStringArray';
+        self.root      = new PACT.Packfile.Namespace();
+        self.main      = null;
+        self.uuid_type = 0;
+        self.uuid      = '';
+
+        var oplibs  = new 'ResizablePMCArray';
+        self.oplibs = oplibs;
+        oplibs[0] = new 'OpLib'(var('core_ops'));
     }
 
+    function set_uuid(int type, string uuid) {
+        self.uuid_type = type;
+        self.uuid      = uuid;
+    }
+
+    // Functions similar to PackfileView
+}
+
+namespace PACT.Packfile {
     class Namespace {
         var name;     // String
         var contents; // Hash
 
         // Should act hash-like
+        function Namespace() {
+            self.Namespace('');
+        }
+
+        function Namespace(string name) {
+            self.name     = name;
+            self.contents = {};
+        }
     }
 
     class Constant {
         var value;
-        var type;  // Integer
+        var type;  // Integer, from call_bits
 
-        // init and set from all types
+        // init (and set?) from all types
     }
 
     namespace Constant {
@@ -52,19 +93,16 @@ namespace PACT.Packfile {
     class Subroutine {
         var name;      // String
         var ops;       // RPA
-        var flags;     // Hash
-        var multi_sig; // FPA or null
+        
+        // Stored by Sub PMC
+        // visit:  namespace_name, multi_sig, outer_sub, lex_info
+        // freeze: start/end offset, flags, name, method_name, ns_entry_name
+        //    hll_name, comp_flags, vtable_index, registers, subid
 
-        // argument information, all Integers
-        var positional_required;
-        var positional_optional;
-        var positional_slurpy;
-        var named_required;
-        var named_optional;
-        var named_slurpy;
-
-        // Registers used
-        var registers; // FIA, ordered based on type flag
+        function Subroutine() {
+            self.name = null;
+            self.ops  = [];
+        }
     }
 
     class Multi {
@@ -76,14 +114,20 @@ namespace PACT.Packfile {
 
     class Op {
         var name; // String
-        var pc;   // Integer
-        var line; // Integer, for debug segment
         var args; // RPA
+
+        function Op(string name) {
+            self.name = name;
+            self.args = [];
+        }
     }
 
     class Label {
         var name; // String
-        var pc;   // Integer
+
+        function Label(string name) {
+            self.name = name;
+        }
     }
 
     class Register {
