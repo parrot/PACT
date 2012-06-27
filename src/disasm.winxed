@@ -292,6 +292,7 @@ function read_packfile(var packfile) {
         var    op   = map[bytecode[pc]];
         string name = op.family_name();
         :PACT.Packfile.Op pop(name);
+        push(sub.ops, pop);
 
         var arg;
         int argc;
