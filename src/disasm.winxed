@@ -332,66 +332,6 @@ function parse_arg(var packfile, int type, int arg, int pc) {
     return ret;
 }
 
-function print_arg(var packfile, int type, int arg, int pc, int had_named) {
-    int cons = type & PARROT_ARG_CONSTANT;
-    int keyd = type & PARROT_ARG_FLATTEN; // :flatten or :slurpy
-    int named = type & PARROT_ARG_NAME;
-    int is_optional = type & PARROT_ARG_OPTIONAL;
-    int is_opt_flag = type & PARROT_ARG_OPT_FLAG;
-    type = type & PARROT_ARG_TYPE_MASK;
-
-    if (keyd) print( named ? '{' : '[');
-
-    if (cons) {
-        switch (type) {
-        case PARROT_ARG_INTVAL:
-            print(arg);
-            break;
-
-        case PARROT_ARG_STRING:
-            string str = packfile.strings[arg];
-            string enc = encoding_name(str);
-            print( enc, ':"', escape(str), '"' );
-            break;
-
-        case PARROT_ARG_PMC:
-            print('PMC(', arg, ')');
-            print_pmc_constant(packfile, arg);
-            break;
-
-        case PARROT_ARG_FLOATVAL:
-            string out = packfile.nums[arg];
-            if ( indexof(out, '.') < 0 )
-            out += '.0';
-            print( out );
-            break;
-
-        default:
-            die( 'Unknown constant type ' + type + ' at PC ' + pc );
-        }
-    } else {
-        string reg;
-        switch (type) {
-        case PARROT_ARG_INTVAL:   reg = '$I'; break;
-        case PARROT_ARG_STRING:   reg = '$S'; break;
-        case PARROT_ARG_PMC:      reg = '$P'; break;
-        case PARROT_ARG_FLOATVAL: reg = '$N'; break;
-        default:
-            die( 'Unknown register type ' + type + ' at PC ' + pc );
-        }
-        print(reg, arg);
-    }
-
-    if (is_optional) print("(optional)");
-    if (is_opt_flag) print("(opt flag)");
-    if (keyd) print(named ? '}' : ']');
-
-    if (!keyd && named && !had_named) return 1, ' => ';
-    return 0, ', ';
-}
-
-
-
 function main[main](var argv) {
     load_bytecode('pact/packfile.pbc');
 
