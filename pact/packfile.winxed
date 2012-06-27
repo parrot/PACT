@@ -69,7 +69,51 @@ namespace PACT.Packfile {
         var value;
         var type;  // Integer, from call_bits
 
-        // init (and set?) from all types
+        function Constant(int value) {
+            self.value = value;
+            self.type  = PARROT_ARG_INTVAL;
+        }
+
+        function Constant(string value) {
+            self.value = value;
+            self.type  = PARROT_ARG_STRING;
+        }
+
+        function Constant(float value) {
+            self.value = value;
+            self.type  = PARROT_ARG_FLOATVAL;
+        }
+
+        function Constant(var value) {
+            self.value = value;
+            self.type  = PARROT_ARG_PMC;
+        }
+
+        function Constant(int type, var value) {
+            self.type = type;
+            switch (type) {
+            case PARROT_ARG_INTVAL:
+                self.value = int(value);
+                break;
+
+            case PARROT_ARG_STRING:
+                self.value = string(value);
+                break;
+
+            case PARROT_ARG_FLOATVAL:
+                self.value = float(value);
+                break;
+
+            case PARROT_ARG_PMC:
+                self.value = value;
+                break;
+
+            default:
+                die("Unknown type "+type);
+            }
+        }
+
+        // set from all types?
     }
 
     namespace Constant {
