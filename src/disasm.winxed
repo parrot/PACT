@@ -57,7 +57,7 @@ function read_packfile(var packfile) {
     if ( !(packfile instanceof 'Packfile') )
         die("Need a PBC filename or Packfile PMC");
 
-    var ret = new PACT.Packfile();
+    :PACT.Packfile ret();
     ret.set_uuid(int(packfile['uuid_type']), string(packfile['uuid']));
 
     // Segments
@@ -141,25 +141,26 @@ function read_packfile(var packfile) {
         annos_size = elements(annotations);
         annos = new 'FixedPMCArray'(annos_size);
         for (i = 0; i < annos_size; ++i) {
-            var panno = new PACT.Packfile.Annotation;
-            annos[i]  = panno;
             var anno  = annotations[i];
-
-            panno.pc    = anno.get_offset();
-            panno.name  = anno.get_name();
 
             type = anno.get_type();
             switch (type) {
             case PARROT_ARG_INTVAL:
             case PARROT_ARG_STRING:
-                panno.value = new PACT.Packfile.Constant(type, anno);
+                val = new PACT.Packfile.Constant(type, anno);
                 break;
+
             case PARROT_ARG_PMC:
-                panno.value = new PACT.Packfile.Constant(type, anno.get_pmc_value());
+                val = new PACT.Packfile.Constant(type, anno.get_pmc_value());
                 break;
+
             default:
                 die( "Unknown annotation type: " + type );
             }
+
+            :PACT.Packfile.Annotation panno(anno.get_name(), val);
+            panno.pc  = anno.get_offset();
+            annos[i]  = panno;
         }
 
         // Make sure the annotations are sorted by PC
@@ -176,11 +177,9 @@ function read_packfile(var packfile) {
     int debugs_size = debug_seg;
     var debugs = new 'FixedPMCArray'(debugs_size);
     for (i = 0; i < debugs_size; ++i) {
-        var pdebug = new PACT.Packfile.Debug;
+        :PACT.Packfile.Debug pdebug(string(debug_seg[i]));;
         debugs[i]  = pdebug;
-
-        pdebug.pc       = int(debug_seg[i]);
-        pdebug.filename = string(debug_seg[i]);
+        pdebug.pc  = int(debug_seg[i]);
     }
     // Make sure the debug mappings are sorted by PC
     debugs.sort(function(a, b) {
@@ -194,7 +193,7 @@ function read_packfile(var packfile) {
     // Opmap
     var opmap = bytecode.opmap();
     size = opmap;
-    var map = new 'FixedPMCArray'(size);
+    var map = new 'ResizablePMCArray'(size);
     for (i = 0; i < size; ++i) {
         string name = opmap[i];
         map[i] = opmap[name];
@@ -236,8 +235,7 @@ function read_packfile(var packfile) {
 
             sub = subs[sub_i++];
             sub_end = sub.end_offs();
-            var new_sub = new PACT.Packfile.Subroutine();
-            new_sub.name = string(sub);
+            :PACT.Packfile.Subroutine new_sub(string(sub));
 
             var names = sub.get_namespace().get_name();
             var ns = ret.root;
@@ -274,7 +272,7 @@ function read_packfile(var packfile) {
         // Parse opcode
         var    op   = map[bytecode[pc]];
         string name = op.family_name();
-        var    pop  = new PACT.Packfile.Op(name);
+        :PACT.Packfile.Op pop(name);
 
         var arg;
         int argc;
@@ -313,27 +311,20 @@ function parse_arg(var packfile, int type, int arg, int pc) {
     if (cons) {
         switch (type) {
         case PARROT_ARG_INTVAL:
-            ret = new PACT.Packfile.Constant;
-            ret.type  = type;
-            ret.value = arg;
+            ret = new PACT.Packfile.Constant(type, arg);
             break;
 
         case PARROT_ARG_STRING:
         case PARROT_ARG_FLOATVAL:
         case PARROT_ARG_PMC:
-            ret = new PACT.Packfile.Constant.Reference;
-            ret.type     = type;
-            ret.value    = arg;
-            ret.packfile = packfile;
+            ret = new PACT.Packfile.Constant.Reference(packfile, type, arg);
             break;
 
         default:
             die("Unknown type "+type+" at PC "+pc);
         }
     } else {
-        ret = new PACT.Packfile.Register;
-        ret.type   = type;
-        ret.number = arg;
+        ret = new PACT.Packfile.Register(type, arg);
     }
 
     return ret;
