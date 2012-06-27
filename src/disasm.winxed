@@ -116,9 +116,11 @@ function read_packfile(var packfile) {
     ret.pmcs = pmcs;
     for (i = 0; i < size; ++i) {
         var c = var(constants[i]);
-        pmcs[i] = c;
         if (c instanceof 'Sub')
-            push(subs, c);
+            push(subs, c); // TODO: Convert to Packfile.Subroutine
+        if (c instanceof 'Key')
+            c = new PACT.Packfile.Constant.Key(c);
+        pmcs[i] = c;
     }
     int subs_size = elements(subs);
 

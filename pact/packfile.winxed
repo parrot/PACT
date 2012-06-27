@@ -132,9 +132,26 @@ namespace PACT.Packfile {
         }
 
         class Key : Constant {
-            // value is an RPA used to build a Key PMC
+            function Key() {
+                self.type  = PARROT_ARG_PMC;
+                self.value = [];
+            }
 
-            // convert to/from Key
+            function Key[multi('_', 'Key')](var value) {
+                self.Key();
+                while (value != null) {
+                    if (value.is_register_reference()) {
+                        :PACT.Packfile.Register reg(value.get_type(),
+                                value.get_register_idx());
+                        push(self.value, reg);
+                    } else {
+                        :PACT.Packfile.Constant c(value.get_type(), value);
+                        push(self.value, c);
+                    }
+                }
+            }
+
+            // convert to Key
         }
     }
 
