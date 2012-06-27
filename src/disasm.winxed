@@ -267,6 +267,11 @@ function read_packfile(var packfile) {
             // TODO: flags, outer, tags, multi, more?
 
             sub = new_sub;
+
+            // Add currently active annotations.
+            push(sub.ops, debug);
+            for(var a in cur_annos)
+                push(sub.ops, a.value());
         }
 
         // Check for dead code
