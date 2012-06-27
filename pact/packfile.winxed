@@ -46,6 +46,31 @@ class PACT.Packfile {
         self.uuid      = uuid;
     }
 
+    function __dump(var dumper, string label) {
+        :(string indent, string subindent) = dumper.newIndent();
+        say('{');
+
+        say(indent, 'uuid: ', self.uuid_type, ' "', self.uuid, '",');
+
+        print(indent, 'floats: ');
+        dumper.dump('floats', self.floats);
+
+        print(",\n", indent, 'strings: ');
+        dumper.dump('strings', self.strings);
+
+        print(",\n", indent, 'pmcs: ');
+        dumper.dump('pmcs', self.pmcs);
+
+        print(",\n", indent, 'root: ');
+        dumper.dump('root', self.root);
+
+        print(",\n", indent, 'main: ');
+        print( (self.main == null) ? '(none)' : self.main.name );
+
+        print("\n", subindent, '}');
+        dumper.deleteIndent();
+    }
+
     // Functions similar to PackfileView
 }
 
@@ -62,6 +87,11 @@ namespace PACT.Packfile {
         function Namespace(string name) {
             self.name     = name;
             self.contents = {};
+        }
+
+        function __dump(dumper, label) {
+            print( self.name, ": " );
+            dumper.dump(label, self.contents);
         }
     }
 
@@ -111,6 +141,30 @@ namespace PACT.Packfile {
             default:
                 die("Unknown type "+type);
             }
+        }
+
+        function __dump(var dumper, string label) {
+            switch (self.type) {
+            case PARROT_ARG_INTVAL:
+                print('INT: ');
+                break;
+
+            case PARROT_ARG_STRING:
+                print('STRING: ');
+                break;
+
+            case PARROT_ARG_FLOATVAL:
+                print('FLOAT: ');
+                break;
+
+            case PARROT_ARG_PMC:
+                print('PMC: ');
+                break;
+
+            default:
+                print('???: ');
+            }
+            dumper.dump(label, self.value);
         }
 
         // set from all types?
@@ -175,6 +229,11 @@ namespace PACT.Packfile {
             self.Subroutine();
             self.name = name;
         }
+
+        function __dump(var dumper, string label) {
+            print(self.name, ': ');
+            dumper.dump(label, self.ops);
+        }
     }
 
     class Multi {
@@ -192,6 +251,20 @@ namespace PACT.Packfile {
             self.name = name;
             self.args = [];
         }
+
+        function __dump(var dumper, string label) {
+            :(string indent, string subindent) = dumper.newIndent();
+            print(self.name, " [");
+            string comma = "\n";
+            int size = elements(self.args);
+            for(int i = 0; i < size; ++i) {
+                print(comma, indent);
+                dumper.dump(i, self.args[i]);
+                comma = ",\n";
+            }
+            print("\n", subindent, "]");
+            dumper.deleteIndent();
+        }
     }
 
     class Label {
@@ -199,6 +272,10 @@ namespace PACT.Packfile {
 
         function Label(string name) {
             self.name = name;
+        }
+
+        function __dump(var dumper, string label) {
+            print(self.name);
         }
     }
 
@@ -209,6 +286,17 @@ namespace PACT.Packfile {
         function Register(int type, int number) {
             self.type   = type;
             self.number = number;
+        }
+
+        function __dump(var dumper, string label) {
+            switch (self.type) {
+            case PARROT_ARG_INTVAL:   print('I'); break;
+            case PARROT_ARG_STRING:   print('S'); break;
+            case PARROT_ARG_PMC:      print('P'); break;
+            case PARROT_ARG_FLOATVAL: print('F'); break;
+            default: print('?');
+            }
+            print(int(self.number));
         }
     }
 
@@ -226,6 +314,14 @@ namespace PACT.Packfile {
             self.name  = name;
             self.value = value;
         }
+
+        function __dump(var dumper, string label) {
+            :(string indent, string subindent) = dumper.newIndent();
+            print(self.name, ": {\n", indent);
+            dumper.dump(self.name, self.value);
+            print("\n", subindent, '}');
+            dumper.deleteIndent();
+        }
     }
 
     class Debug {
@@ -234,6 +330,10 @@ namespace PACT.Packfile {
 
         function Debug(string filename) {
             self.filename = filename;
+        }
+
+        function __dump(var dumper, string label) {
+            print(self.filename);
         }
     }
 }

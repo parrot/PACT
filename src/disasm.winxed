@@ -334,6 +334,7 @@ function parse_arg(var packfile, int type, int arg, int pc) {
 
 function main[main](var argv) {
     load_bytecode('pact/packfile.pbc');
+    load_bytecode('dumper.pbc');
 
     // Process arguments
     string progname = argv[0];
@@ -347,6 +348,7 @@ function main[main](var argv) {
     var packfile;
     try {
         packfile = read_packfile(filename);
+        _dumper(packfile, 'Packfile');
     } catch (e) {
         cry( progname, ': Error during disassembly ', filename );
         cry( e.message );
