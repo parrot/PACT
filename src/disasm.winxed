@@ -1,508 +1,424 @@
 // Copyright (C) 2011-2012, Parrot Foundation.
 
-// Basic disassembler to explore the Packfile PMCs
-
-namespace PACT {
-	class Packfile {
-		// PBC header
-		var header;
-
-		// Segment names
-		var annotations_name;
-		var bytecode_name;
-		var constants_name;
-		var debug_name;
-
-		// Annotations
-		var annotations;
-
-		// Constants
-		var nums;
-		var pmcs;
-		var strings;
-		var subs;
-
-		// Debug mappings
-		var debug_files;
-		var debug_lines;
-
-		// Bytecode information
-		var oplibs;
-		var opmap;
-		var bytecode;
-
-		function Packfile(var packfile) {
-			// Often used variable
-			int size, i;
-
-			if ( packfile instanceof 'String' ) {
-				string name = packfile;
-				packfile = new 'Packfile';
-				var file = open(name);
-				file.encoding('binary');
-				packfile.unpack(string(file.readall()));
-				file.close();
-			}
-
-			if ( !(packfile instanceof 'Packfile') )
-				die("Need a PBC filename or Packfile PMC");
-
-			// Extract header information
-			var header;
-			self.header = header = new 'Hash';
-			for ( string key in [
-					'wordsize', 'byteorder', 'fptype', 'uuid_type',
-					'version_major', 'version_minor', 'version_patch',
-					'bytecode_major', 'bytecode_minor'
-					] )
-				header[key] = int(packfile[key]);
-			header['uuid'] = string(packfile['uuid']);
-
-			// Segments
-			var annotations;
-			var bytecode;
-			var constants;
-			var debug;
-
-			// Find the segments
-			var directory = packfile.get_directory();
-			for ( string name in directory ) {
-				var segment = directory[name];
-				switch (typeof(segment)) {
-				case 'PackfileAnnotations':
-					if ( annotations != null )
-						die("Got more than one annotation segment");
-					self.annotations_name = name;
-					annotations = segment;
-					break;
-				case 'PackfileBytecodeSegment':
-					if ( bytecode != null )
-						die("Got more than one bytecode segment");
-					self.bytecode_name = name;
-					bytecode = segment;
-					break;
-				case 'PackfileConstantTable':
-					if ( constants != null )
-						die("Got more than one constant table");
-					self.constants_name = name;
-					constants = segment;
-					break;
-				case 'PackfileDebug':
-					if ( debug != null )
-						die("Got more than one debug segment");
-					self.debug_name = name;
-					debug = segment;
-					break;
-				default:
-					string type = typeof(segment);
-					die("Unknown bytecode segment type: " + type);
-				}
-			}
-
-			// Load annotations
-			// TODO: Don't just hang onto the PackfileAnnotation
-			if (annotations != null) {
-				size = elements(annotations);
-				var annos = new 'FixedPMCArray'(size);
-				self.annotations = annos;
-				for (i = 0; i < size; ++i)
-					annos[i] = annotations[i];
-			}
-
-			// Load constants
-			size = constants.num_count();
-			var nums = new 'FixedFloatArray'(size);
-			self.nums = nums;
-			for (i = 0; i < size; ++i)
-				nums[i] = float(constants[i]);
-
-			size = constants.pmc_count();
-			var pmcs = new 'FixedPMCArray'(size);
-			var subs = [];
-			self.pmcs = pmcs;
-			self.subs = subs;
-			for (i = 0; i < size; ++i) {
-				var c = var(constants[i]);
-				pmcs[i] = c;
-				if (c instanceof 'Sub')
-					push(subs, c);
-			}
-			// Make sure the subs are sorted according to the code offsets
-			subs.sort(function(a, b) {
-				int a_i = a.start_offs();
-				int b_i = b.start_offs();
-				if (a_i == b_i) return 0;
-				if (a_i < b_i) return -1;
-				return 1;
-			});
-
-			size = constants.str_count();
-			var strings = new 'FixedStringArray'(size);
-			self.strings = strings;
-			for (i = 0; i < size; ++i)
-				strings[i] = string(constants[i]);
-
-			// Load debug mappings
-			size = debug;
-			var debug_files = new 'FixedStringArray'(size);
-			var debug_lines = new 'FixedIntegerArray'(size);
-			self.debug_files = debug_files;
-			self.debug_lines = debug_lines;
-			for (i = 0; i < size; ++i) {
-				debug_files[i] = string(debug[i]);
-				debug_lines[i] = int(debug[i]);
-			}
-
-			// Opmap
-			var opmap = bytecode.opmap();
-			size = opmap;
-			var map = new 'FixedPMCArray'(size);
-			self.opmap = map;
-			for (i = 0; i < size; ++i) {
-				string name = opmap[i];
-				map[i] = opmap[name];
-			}
-			self.oplibs = opmap.oplibs();
-
-			// Bytecode
-			size = elements(bytecode);
-			var ops = new 'FixedIntegerArray'(size);
-			self.bytecode = ops;
-			for (i = 0; i < size; ++i)
-				ops[i] = bytecode[i];
-		}
-	}
-}
-
-function print_header(var packfile) {
-	var info = packfile.header;
-
-	say( 'Core Version    : ', info['version_major'], '.',
-			info['version_minor'], '.', info['version_patch'] );
-	say( 'Bytecode Version: ', info['bytecode_major'],
-			'.', info['bytecode_minor'] );
-	say( 'UUID (type ', info['uuid_type'], ')   : ', info['uuid'] );
-	say( 'Wordsize ', info['wordsize'],
-			'  Byteorder ', info['byteorder'],
-			'  Floattype ', info['fptype'] );
-}
+// Basic disassembler to demonstrate the PACT.Packfile classes
 
 // Get all the argument type constants for PCC
 $include_const 'call_bits.pasm';
 
+// Predeclare the PACT.Packfile classes
+class PACT.Packfile;
+class PACT.Packfile.Namespace;
+class PACT.Packfile.Constant;
+class PACT.Packfile.Constant.Reference;
+class PACT.Packfile.Constant.Key;
+class PACT.Packfile.Subroutine;
+class PACT.Packfile.Multi;
+class PACT.Packfile.Op;
+class PACT.Packfile.Label;
+class PACT.Packfile.Register;
+class PACT.Packfile.Annotation;
+class PACT.Packfile.Debug;
+
+// Useful opcodes
+inline get_repr(var obj) return string {
+    string ret;
+    ${ get_repr ret, obj };
+    return ret;
+}
+
+inline inspect(var obj) return var {
+    var ret;
+    ${ inspect ret, obj };
+    return ret;
+}
+
+inline inspect_s(var obj, string name) return var {
+    var ret;
+    ${ inspect ret, obj, name };
+    return ret;
+}
+
+
+function read_packfile(var packfile) {
+    // Often used variables
+    int size, i;
+    int type;
+    var val;
+
+    if ( packfile instanceof 'String' ) {
+        string name = packfile;
+        packfile = new 'Packfile';
+        var file = open(name);
+        file.encoding('binary');
+        packfile.unpack(string(file.readall()));
+        file.close();
+    }
+
+    if ( !(packfile instanceof 'Packfile') )
+        die("Need a PBC filename or Packfile PMC");
+
+    var ret = new PACT.Packfile();
+    ret.set_uuid(int(packfile['uuid_type']), string(packfile['uuid']));
+
+    // Segments
+    var annotations;
+    var bytecode;
+    var constants;
+    var debug_seg;
+
+    // Find the segments
+    var directory = packfile.get_directory();
+    for ( string name in directory ) {
+        var segment = directory[name];
+        switch (typeof(segment)) {
+        case 'PackfileAnnotations':
+            if ( annotations != null )
+                die("Got more than one annotation segment");
+            annotations = segment;
+            break;
+        case 'PackfileBytecodeSegment':
+            if ( bytecode != null )
+                die("Got more than one bytecode segment");
+            bytecode = segment;
+            break;
+        case 'PackfileConstantTable':
+            if ( constants != null )
+                die("Got more than one constant table");
+            constants = segment;
+            break;
+        case 'PackfileDebug':
+            if ( debug_seg != null )
+                die("Got more than one debug segment");
+            debug_seg = segment;
+            break;
+        default:
+            string type = typeof(segment);
+            die("Unknown bytecode segment type: " + type);
+        }
+    }
+
+    // Load constants
+    size = constants.num_count();
+    var nums = new 'FixedFloatArray'(size);
+    ret.floats = nums;
+    for (i = 0; i < size; ++i)
+        nums[i] = float(constants[i]);
+
+    size = constants.str_count();
+    var strings = new 'FixedStringArray'(size);
+    ret.strings = strings;
+    for (i = 0; i < size; ++i)
+        strings[i] = string(constants[i]);
+
+    size = constants.pmc_count();
+    var pmcs = new 'FixedPMCArray'(size);
+    var subs = [];
+    ret.pmcs = pmcs;
+    for (i = 0; i < size; ++i) {
+        var c = var(constants[i]);
+        pmcs[i] = c;
+        if (c instanceof 'Sub')
+            push(subs, c);
+    }
+    int subs_size = elements(subs);
+
+    // Make sure the subs are sorted according to the code offsets
+    subs.sort(function(a, b) {
+        int a_i = a.start_offs();
+        int b_i = b.start_offs();
+        if (a_i == b_i) return 0;
+        if (a_i < b_i) return -1;
+        return 1;
+    });
+
+    // Load annotations
+    var annos;
+    int annos_size;
+    if (annotations == null) {
+        annos = new 'FixedPMCArray'(0);
+        annos_size = 0;
+    } else {
+        annos_size = elements(annotations);
+        annos = new 'FixedPMCArray'(annos_size);
+        for (i = 0; i < annos_size; ++i) {
+            var panno = new PACT.Packfile.Annotation;
+            annos[i]  = panno;
+            var anno  = annotations[i];
+
+            panno.pc    = anno.get_offset();
+            panno.name  = anno.get_name();
+
+            type = anno.get_type();
+            switch (type) {
+            case PARROT_ARG_INTVAL:
+            case PARROT_ARG_STRING:
+                panno.value = new PACT.Packfile.Constant(type, anno);
+                break;
+            case PARROT_ARG_PMC:
+                panno.value = new PACT.Packfile.Constant(type, anno.get_pmc_value());
+                break;
+            default:
+                die( "Unknown annotation type: " + type );
+            }
+        }
+
+        // Make sure the annotations are sorted by PC
+        annos.sort(function(a, b) {
+            int a_i = a.pc;
+            int b_i = b.pc;
+            if (a_i == b_i) return  0;
+            if (a_i <  b_i) return -1;
+            return 1;
+        });
+    }
+
+    // Load debug mappings
+    int debugs_size = debug_seg;
+    var debugs = new 'FixedPMCArray'(debugs_size);
+    for (i = 0; i < debugs_size; ++i) {
+        var pdebug = new PACT.Packfile.Debug;
+        debugs[i]  = pdebug;
+
+        pdebug.pc       = int(debug_seg[i]);
+        pdebug.filename = string(debug_seg[i]);
+    }
+    // Make sure the debug mappings are sorted by PC
+    debugs.sort(function(a, b) {
+        int a_i = a.pc;
+        int b_i = b.pc;
+        if (a_i == b_i) return  0;
+        if (a_i <  b_i) return -1;
+        return 1;
+    });
+
+    // Opmap
+    var opmap = bytecode.opmap();
+    size = opmap;
+    var map = new 'FixedPMCArray'(size);
+    for (i = 0; i < size; ++i) {
+        string name = opmap[i];
+        map[i] = opmap[name];
+    }
+    ret.oplibs = opmap.oplibs();
+
+    // Parse Bytecode
+    int sub_i   = 0; // index of next sub
+    int sub_end = 0; // end PC of current sub
+    int anno_i  = 0; // index of next annotation
+    int debug_i = 0; // index of next debug filename
+
+    var cur_annos = {}; // current annotations
+    var debug; // current debug
+    var sub; // current subroutine
+
+    size = elements(bytecode);
+    for (int pc = 0; pc < size; ++pc) {
+        // Update annotations
+        while (anno_i < annos_size && annos[anno_i].pc == pc) {
+            var anno = annos[anno_i++];
+            cur_annos[anno.name] = anno;
+            if (sub != null)
+                push(sub.ops, anno);
+        }
+
+        // Update debug
+        while (debug_i < debugs_size && debugs[debug_i].pc == pc) {
+            debug = debugs[debug_i++];
+            if (sub != null)
+                push(sub.ops, debug);
+        }
+
+        // Update sub
+        // XXX: Doesn't handle overlapping subs
+        // But that's okay right now, nobody generates them
+        if (sub_i < subs_size && subs[sub_i].start_offs() == pc) {
+            // TODO: Pop off unneeded annotations and debugs?
+
+            sub = subs[sub_i++];
+            sub_end = sub.end_offs();
+            var new_sub = new PACT.Packfile.Subroutine();
+            new_sub.name = string(sub);
+
+            var names = sub.get_namespace().get_name();
+            var ns = ret.root;
+            for (string n in names) {
+                if (n == '')
+                    continue;
+                if (!(exists ns.contents[n]))
+                    ns.contents[n] = new PACT.Packfile.Namespace(n);
+                ns = ns.contents[n];
+            }
+            if (exists ns.contents[string(sub)])
+                die("Duplicate sub name"); // TODO handle multis
+            ns.contents[string(sub)] = new_sub;
+
+            // TODO: flags, outer, tags, multi, more?
+
+            sub = new_sub;
+        }
+
+        // Check for dead code
+        if (sub_end == pc || sub == null) {
+            if (exists ret.root.contents['']) {
+                sub = ret.root.contents[''];
+            } else {
+                sub = new PACT.Packfile.Subroutine();
+                sub.name = '';
+                ret.root.contents[''] = sub;
+            }
+        }
+
+        // Insert label
+        push(sub.ops, new PACT.Packfile.Label('_'+string(pc)));
+
+        // Parse opcode
+        var    op   = map[bytecode[pc]];
+        string name = op.family_name();
+        var    pop  = new PACT.Packfile.Op(name);
+
+        var arg;
+        int argc;
+        switch(name) {
+        case 'set_args':
+        case 'get_results':
+        case 'get_params':
+        case 'set_returns':
+            var arg_types = ret.pmcs[bytecode[++pc]];
+            argc = elements(arg_types);
+            for (i = 0; i < argc; ++i) {
+                ++pc;
+                arg = parse_arg(ret, int(arg_types[i]), bytecode[pc], pc);
+                push(pop.args, arg);
+            }
+            break;
+
+        default:
+            argc = elements(op);
+            for (i = 0; i < argc; ++i) {
+                ++pc;
+                arg = parse_arg(ret, int(op[i]), bytecode[pc], pc);
+                push(pop.args, arg);
+            }
+        }
+    }
+
+    return ret;
+}
+
+function parse_arg(var packfile, int type, int arg, int pc) {
+    int cons = type & PARROT_ARG_CONSTANT;
+    type = type & PARROT_ARG_TYPE_MASK;
+    var ret;
+
+    if (cons) {
+        switch (type) {
+        case PARROT_ARG_INTVAL:
+            ret = new PACT.Packfile.Constant;
+            ret.type  = type;
+            ret.value = arg;
+            break;
+
+        case PARROT_ARG_STRING:
+        case PARROT_ARG_FLOATVAL:
+        case PARROT_ARG_PMC:
+            ret = new PACT.Packfile.Constant.Reference;
+            ret.type     = type;
+            ret.value    = arg;
+            ret.packfile = packfile;
+            break;
+
+        default:
+            die("Unknown type "+type+" at PC "+pc);
+        }
+    } else {
+        ret = new PACT.Packfile.Register;
+        ret.type   = type;
+        ret.number = arg;
+    }
+
+    return ret;
+}
+
 function print_arg(var packfile, int type, int arg, int pc, int had_named) {
-	int cons = type & PARROT_ARG_CONSTANT;
-	int keyd = type & PARROT_ARG_FLATTEN; // :flatten or :slurpy
-	int named = type & PARROT_ARG_NAME;
-	int is_optional = type & PARROT_ARG_OPTIONAL;
-	int is_opt_flag = type & PARROT_ARG_OPT_FLAG;
-	type = type & PARROT_ARG_TYPE_MASK;
+    int cons = type & PARROT_ARG_CONSTANT;
+    int keyd = type & PARROT_ARG_FLATTEN; // :flatten or :slurpy
+    int named = type & PARROT_ARG_NAME;
+    int is_optional = type & PARROT_ARG_OPTIONAL;
+    int is_opt_flag = type & PARROT_ARG_OPT_FLAG;
+    type = type & PARROT_ARG_TYPE_MASK;
 
-	if (keyd) print( named ? '{' : '[');
+    if (keyd) print( named ? '{' : '[');
 
-	if (cons) {
-		switch (type) {
-		case PARROT_ARG_INTVAL:
-			print(arg);
-			break;
+    if (cons) {
+        switch (type) {
+        case PARROT_ARG_INTVAL:
+            print(arg);
+            break;
 
-		case PARROT_ARG_STRING:
-			string str = packfile.strings[arg];
-			string enc = encoding_name(str);
-			print( enc, ':"', escape(str), '"' );
-			break;
+        case PARROT_ARG_STRING:
+            string str = packfile.strings[arg];
+            string enc = encoding_name(str);
+            print( enc, ':"', escape(str), '"' );
+            break;
 
-		case PARROT_ARG_PMC:
-			print('PMC(', arg, ')');
-			print_pmc_constant(packfile, arg);
-			break;
+        case PARROT_ARG_PMC:
+            print('PMC(', arg, ')');
+            print_pmc_constant(packfile, arg);
+            break;
 
-		case PARROT_ARG_FLOATVAL:
-			string out = packfile.nums[arg];
-			if ( indexof(out, '.') < 0 )
-				out += '.0';
-			print( out );
-			break;
+        case PARROT_ARG_FLOATVAL:
+            string out = packfile.nums[arg];
+            if ( indexof(out, '.') < 0 )
+            out += '.0';
+            print( out );
+            break;
 
-		default:
-			die( 'Unknown constant type ' + type + ' at PC ' + pc );
-		}
-	} else {
-		string reg;
-		switch (type) {
-		case PARROT_ARG_INTVAL:   reg = '$I'; break;
-		case PARROT_ARG_STRING:   reg = '$S'; break;
-		case PARROT_ARG_PMC:      reg = '$P'; break;
-		case PARROT_ARG_FLOATVAL: reg = '$N'; break;
-		default:
-			die( 'Unknown register type ' + type + ' at PC ' + pc );
-		}
-		print(reg, arg);
-	}
+        default:
+            die( 'Unknown constant type ' + type + ' at PC ' + pc );
+        }
+    } else {
+        string reg;
+        switch (type) {
+        case PARROT_ARG_INTVAL:   reg = '$I'; break;
+        case PARROT_ARG_STRING:   reg = '$S'; break;
+        case PARROT_ARG_PMC:      reg = '$P'; break;
+        case PARROT_ARG_FLOATVAL: reg = '$N'; break;
+        default:
+            die( 'Unknown register type ' + type + ' at PC ' + pc );
+        }
+        print(reg, arg);
+    }
 
-	if (is_optional) print("(optional)");
-	if (is_opt_flag) print("(opt flag)");
-	if (keyd) print(named ? '}' : ']');
+    if (is_optional) print("(optional)");
+    if (is_opt_flag) print("(opt flag)");
+    if (keyd) print(named ? '}' : ']');
 
-	if (!keyd && named && !had_named) return 1, ' => ';
-	return 0, ', ';
+    if (!keyd && named && !had_named) return 1, ' => ';
+    return 0, ', ';
 }
 
-function bytecode_segment(var packfile) {
-	int i, size, sub_idx = -1, sub_start_idx, sub_end_idx = -1;
-	var current_sub;
 
-	say( '   Oplibs:' );
-	var oplibs = packfile.oplibs;
-	for (string name in oplibs) {
-		var version = oplibs[name].version();
-		print( '      ', name, ' ', version[0] );
-		size = elements(version);
-		for (i = 1; i < size; ++i)
-			print( '.', version[i] );
-		say();
-	}
-
-	say( '   Opmap:' );
-	var opmap = packfile.opmap;
-	size = elements(opmap);
-	for (i = 0; i < size; ++i)
-		say( '      ', i, ': ', opmap[i], ' ', elements(opmap[i]) );
-
-	say( '   Bytecode:' );
-	var bytecode = packfile.bytecode;
-	size = elements(bytecode);
-
-	for (i = 0; i < size; ++i) {
-		if (i >= sub_end_idx) {
-			sub_idx++;
-			current_sub = packfile.subs[sub_idx];
-			sub_start_idx = current_sub.start_offs();
-			sub_end_idx = current_sub.end_offs();
-		}
-		if (i == sub_start_idx)
-			say(sprintf('      Subroutine: %s (%d - %d)',
-			            [current_sub, sub_start_idx, sub_end_idx]));
-
-		var op = opmap[bytecode[i]];
-		string name = op.family_name();
-		print( '      ', sprintf('%3d', [i] ), ': ', name );
-
-		int space = 20 - length(name);
-		if ( space <= 0 ) space = 1;
-		for (; space > 0; --space)
-			print( ' ' );
-
-		int j, args;
-		switch (name) {
-			case 'set_args':
-			case 'get_results':
-			case 'get_params':
-			case 'set_returns':
-				// Loop over FIA const
-				var arg_types = packfile.pmcs[bytecode[++i]];
-				args = elements(arg_types);
-
-				print( '(' );
-				string comma = "";
-				int had_named = 0;
-				for ( j = 0; j < args; ++j ) {
-					++i;
-					print(comma);
-					:(had_named, comma) = print_arg(packfile, int(arg_types[j]), bytecode[i], i, had_named);
-				}
-				print( ')' );
-				break;
-
-			default:
-				args = elements(op);
-				for (j = 0; j < args; ++j) {
-					++i;
-					if ( j > 0 ) print( ', ' );
-
-					print_arg(packfile, int(op[j]), bytecode[i], i, 0);
-				}
-		}
-
-		say();
-	}
-}
-
-function print_pmc_constant(var packfile, int i)
-{
-	var arr = packfile.pmcs;
-	var c = arr[i];
-	string type = typeof(c);
-	print( ' (', type, '): ' );
-
-	if ( c instanceof 'Sub' ) {
-		print(sprintf("%s (PC %d - %d)", [c, c.start_offs(), c.end_offs()]));
-		// TODO: multi, outer, arity, flags
-
-		var multi = c.get_multisig();
-		string s;
-		if ( multi != null ) {
-		    ${ get_repr s, multi };
-		    print(' (multi: ', typeof(multi), ' ', s, ')');
-                }
-
-		return;
-	}
-
-	if ( c instanceof 'Key' ) {
-		print( '[ ' );
-		while ( c != null ) {
-			if (c.is_register_reference()) {
-				print('$');
-				switch(c.get_type()) {
-				case PARROT_ARG_INTVAL:
-					print('I');
-					break;
-				case PARROT_ARG_STRING:
-					print('S');
-					break;
-				case PARROT_ARG_PMC:
-					print('P');
-					break;
-				}
-				print(c.get_register_idx());
-			} else {
-				print(c); // Prints value of current item
-			}
-
-			${ shift c, c };
-			if ( c != null )
-				print(', ');
-		}
-		print( ' ]' );
-		return;
-	}
-
-	try {
-		print(c);
-	} catch () {
-		print('<Unprintable>');
-	}
-}
-
-function constant_table(var packfile) {
-	var arr;
-	int i, size;
-
-	arr = packfile.nums;
-	size = elements(arr);
-	say( '   ', size, ' numeric constants:' );
-	for (i = 0; i < size; ++i)
-		say( '      ', i, ': ', arr[i] );
-
-	arr = packfile.strings;
-	size = elements(arr);
-	say( '   ', size, ' string constants:' );
-	for (i = 0; i < size; ++i) {
-		string s = arr[i];
-		say( '      ', i, ' (', encoding_name(s), '): "', escape(s), '"' );
-	}
-
-	arr = packfile.pmcs;
-	size = elements(arr);
-	say( '   ', size, ' PMC constants:' );
-	for (i = 0; i < size; ++i) {
-		print('      ', i);
-		print_pmc_constant(packfile, i);
-		say();
-	}
-}
-
-function debug_segment(var packfile) {
-	var debug_files = packfile.debug_files;
-	var debug_lines = packfile.debug_lines;
-	int size = elements(debug_files);
-
-	say( '   ', size, ' debug mappings:' );
-	for (int i = 0; i < size; ++i)
-		say( '      ', i, ': ', debug_files[i], ' ', debug_lines[i] );
-}
-
-function annotations_segment(var packfile) {
-	var annotations = packfile.annotations;
-	int size = elements(annotations);
-
-	say( '   ', size, ' annotations:' );
-	for (int i = 0; i < size; ++i) {
-		var annotation = annotations[i];
-
-		int offset = annotation.get_offset();
-		string name = annotation.get_name();
-		print( '      ', offset, ' ', name, ': ' );
-
-		int can_get_type;
-		${ can can_get_type, annotation, 'get_type' };
-		if (can_get_type) {
-			switch (annotation.get_type()) {
-			case PARROT_ARG_INTVAL:
-				say(int(annotation));
-				break;
-
-			case PARROT_ARG_STRING:
-				string s = annotation;
-				say(encoding_name(s), ':"', escape(s), '"' );
-				break;
-
-			case PARROT_ARG_PMC:
-				var val = annotation.get_pmc_value();
-				print( '(', typeof(val), '): ' );
-				try {
-					say(val);
-				} catch () {
-					say('<Unprintable>');
-				}
-			}
-		} else {
-			say("Unknown annotation type");
-		}
-	}
-}
 
 function main[main](var argv) {
-	// Process arguments
-	string progname = argv[0];
-	if (elements(argv) != 2) {
-		cry('Usage: ', progname, ' <PBC file>');
-		exit(1);
-	}
-	string filename = argv[1];
+    load_bytecode('pact/packfile.pbc');
 
-	// Get a Packfile
-	var packfile;
-	try {
-		packfile = new PACT.Packfile(filename);
-	} catch (e) {
-		cry( progname, ': Error reading packfile ', filename );
-		cry( e.message );
-		for ( string bt in e.backtrace_strings() )
-			cry(bt);
-		exit(1);
-	}
+    // Process arguments
+    string progname = argv[0];
+    if (elements(argv) != 2) {
+        cry('Usage: ', progname, ' <PBC file>');
+        exit(1);
+    }
+    string filename = argv[1];
 
-	try {
-		print_header(packfile);
-		say();
-		say('Segments:');
-		say(' Constants: ', packfile.constants_name);
-		constant_table(packfile);
-		say(' Debug: ', packfile.debug_name);
-		debug_segment(packfile);
-		if (packfile.annotations_name != null) {
-			say(' Annotations: ', packfile.annotations_name);
-			annotations_segment(packfile);
-		}
-		say(' Bytecode: ', packfile.bytecode_name);
-		bytecode_segment(packfile);
-	} catch (e) {
-		cry( progname, ': Error during disassembly ', filename );
-		cry( e.message );
-		for ( string bt in e.backtrace_strings() )
-			cry(bt);
-		exit(1);
-	}
+    // Get a Packfile
+    var packfile;
+    try {
+        packfile = read_packfile(filename);
+    } catch (e) {
+        cry( progname, ': Error during disassembly ', filename );
+        cry( e.message );
+        for ( string bt in e.backtrace_strings() )
+            cry(bt);
+        exit(1);
+    }
 }
