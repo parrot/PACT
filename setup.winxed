@@ -50,6 +50,7 @@ function main[main](var argv) {
         };
 
         pbc_winxed(pact, 'pact/packfile');
+        pbc_winxed(pact, 'pact/packfile/decompile');
         installable_winxed(pact, 'pact_disasm', 'src/disasm');
 
         // Invoke distutils

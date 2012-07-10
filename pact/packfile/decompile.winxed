@@ -1,0 +1,346 @@
+// Copyright (C) 2012, Parrot Foundation.
+
+// Basic PBC to PACT.Packfile decompiler
+
+// Get all the argument type constants for PCC
+$include_const 'call_bits.pasm';
+
+// Predeclare and load the PACT.Packfile classes
+class PACT.Packfile;
+class PACT.Packfile.Namespace;
+class PACT.Packfile.Constant;
+class PACT.Packfile.Constant.Reference;
+class PACT.Packfile.Constant.Key;
+class PACT.Packfile.Subroutine;
+class PACT.Packfile.Multi;
+class PACT.Packfile.Op;
+class PACT.Packfile.Label;
+class PACT.Packfile.Register;
+class PACT.Packfile.Annotation;
+class PACT.Packfile.Debug;
+function init[load,init]() {
+    load_bytecode('pact/packfile.pbc');
+}
+
+// Utility function to parse a argument
+function parse_arg(var packfile, int type, int arg, int pc) {
+    int cons = type & PARROT_ARG_CONSTANT;
+    type = type & PARROT_ARG_TYPE_MASK;
+    var ret;
+
+    if (cons) {
+        switch (type) {
+        case PARROT_ARG_INTVAL:
+            ret = new PACT.Packfile.Constant(type, arg);
+            break;
+
+        case PARROT_ARG_STRING:
+        case PARROT_ARG_FLOATVAL:
+        case PARROT_ARG_PMC:
+            ret = new PACT.Packfile.Constant.Reference(packfile, type, arg);
+            break;
+
+        default:
+            die("Unknown type "+type+" at PC "+pc);
+        }
+    } else {
+        ret = new PACT.Packfile.Register(type, arg);
+    }
+
+    return ret;
+}
+
+// Class to decompile Packfiles to PACT.Packfiles
+class PACT.Packfile.Decompile {
+    // Packfiles
+    var packfile; // Input Packfile
+    var pact;     // Output PACT.Packfile
+
+    function Decompile(var packfile) {
+        // Often used variables
+        int size, i;
+        int type;
+        var val;
+
+        if ( packfile instanceof 'String' ) {
+            string name = packfile;
+            packfile = new 'Packfile';
+            var file = open(name);
+            file.encoding('binary');
+            packfile.unpack(string(file.readall()));
+            file.close();
+        }
+
+        if ( !(packfile instanceof 'Packfile') )
+            die("Need a PBC filename or Packfile PMC");
+        self.packfile = packfile;
+
+        :PACT.Packfile ret();
+        ret.set_uuid(int(packfile['uuid_type']), string(packfile['uuid']));
+
+        // Segments
+        var annotations;
+        var bytecode;
+        var constants;
+        var debug_seg;
+
+        // Find the segments
+        var directory = packfile.get_directory();
+        for ( string name in directory ) {
+            var segment = directory[name];
+            switch (typeof(segment)) {
+            case 'PackfileAnnotations':
+                if ( annotations != null )
+                    die("Got more than one annotation segment");
+                annotations = segment;
+                break;
+            case 'PackfileBytecodeSegment':
+                if ( bytecode != null )
+                    die("Got more than one bytecode segment");
+                bytecode = segment;
+                break;
+            case 'PackfileConstantTable':
+                if ( constants != null )
+                    die("Got more than one constant table");
+                constants = segment;
+                break;
+            case 'PackfileDebug':
+                if ( debug_seg != null )
+                    die("Got more than one debug segment");
+                debug_seg = segment;
+                break;
+            default:
+                string type = typeof(segment);
+                die("Unknown bytecode segment type: " + type);
+            }
+        }
+
+        // Load constants
+        size = constants.num_count();
+        var nums = new 'FixedFloatArray'(size);
+        ret.floats = nums;
+        for (i = 0; i < size; ++i)
+            nums[i] = float(constants[i]);
+
+        size = constants.str_count();
+        var strings = new 'FixedStringArray'(size);
+        ret.strings = strings;
+        for (i = 0; i < size; ++i)
+            strings[i] = string(constants[i]);
+
+        size = constants.pmc_count();
+        var pmcs = new 'FixedPMCArray'(size);
+        var subs = [];
+        ret.pmcs = pmcs;
+        for (i = 0; i < size; ++i) {
+            var c = var(constants[i]);
+            if (c instanceof 'Sub')
+                push(subs, c); // TODO: Convert to Packfile.Subroutine
+            if (c instanceof 'Key')
+                c = new PACT.Packfile.Constant.Key(c);
+            pmcs[i] = c;
+        }
+        int subs_size = elements(subs);
+
+        // Make sure the subs are sorted according to the code offsets
+        subs.sort(function(a, b) {
+            int a_i = a.start_offs();
+            int b_i = b.start_offs();
+            if (a_i == b_i) return 0;
+            if (a_i < b_i) return -1;
+            return 1;
+        });
+
+        // Load annotations
+        var annos;
+        int annos_size;
+        if (annotations == null) {
+            annos = new 'FixedPMCArray'(0);
+            annos_size = 0;
+        } else {
+            annos_size = elements(annotations);
+            annos = new 'FixedPMCArray'(annos_size);
+            for (i = 0; i < annos_size; ++i) {
+                var anno  = annotations[i];
+
+                type = anno.get_type();
+                switch (type) {
+                case PARROT_ARG_INTVAL:
+                case PARROT_ARG_STRING:
+                    val = new PACT.Packfile.Constant(type, anno);
+                    break;
+
+                case PARROT_ARG_PMC:
+                    val = new PACT.Packfile.Constant(type, anno.get_pmc_value());
+                    break;
+
+                default:
+                    die( "Unknown annotation type: " + type );
+                }
+
+                :PACT.Packfile.Annotation panno(anno.get_name(), val);
+                panno.pc  = anno.get_offset();
+                annos[i]  = panno;
+            }
+
+            // Make sure the annotations are sorted by PC
+            annos.sort(function(a, b) {
+                int a_i = a.pc;
+                int b_i = b.pc;
+                if (a_i == b_i) return  0;
+                if (a_i <  b_i) return -1;
+                return 1;
+            });
+        }
+
+        // Load debug mappings
+        int debugs_size = debug_seg;
+        var debugs = new 'FixedPMCArray'(debugs_size);
+        for (i = 0; i < debugs_size; ++i) {
+            :PACT.Packfile.Debug pdebug(string(debug_seg[i]));;
+            debugs[i]  = pdebug;
+            pdebug.pc  = int(debug_seg[i]);
+        }
+        // Make sure the debug mappings are sorted by PC
+        debugs.sort(function(a, b) {
+            int a_i = a.pc;
+            int b_i = b.pc;
+            if (a_i == b_i) return  0;
+            if (a_i <  b_i) return -1;
+            return 1;
+        });
+
+        // Opmap
+        var opmap = bytecode.opmap();
+        size = opmap;
+        var map = new 'ResizablePMCArray'(size);
+        for (i = 0; i < size; ++i) {
+            string name = opmap[i];
+            map[i] = opmap[name];
+        }
+        ret.oplibs = opmap.oplibs();
+
+        // Parse Bytecode
+        int sub_i   = 0; // index of next sub
+        int sub_end = 0; // end PC of current sub
+        int anno_i  = 0; // index of next annotation
+        int debug_i = 0; // index of next debug filename
+
+        var cur_annos = {}; // current annotations
+        var debug; // current debug
+        var sub; // current subroutine
+
+        size = elements(bytecode);
+        for (int pc = 0; pc < size; ++pc) {
+            // Update annotations
+            while (anno_i < annos_size && annos[anno_i].pc == pc) {
+                var anno = annos[anno_i++];
+                cur_annos[anno.name] = anno;
+                if (sub != null)
+                    push(sub.ops, anno);
+            }
+
+            // Update debug
+            while (debug_i < debugs_size && debugs[debug_i].pc == pc) {
+                debug = debugs[debug_i++];
+                if (sub != null)
+                    push(sub.ops, debug);
+            }
+
+            // Update sub
+            // XXX: Doesn't handle overlapping subs
+            // But that's okay right now, nobody generates them
+            if (sub_i < subs_size && subs[sub_i].start_offs() == pc) {
+                // Pop off unneeded annotations and debugs?
+                for(i = elements(sub.ops) - 1; i >= 0; --i) {
+                    // XXX: Is there a better way to do this comparison?
+                    switch (typeof(sub.ops[i])) {
+                    case 'PACT;Packfile;Annotation':
+                    case 'PACT;Packfile;Debug':
+                        delete sub.ops[i];
+                        break;
+                    default:
+                        i = 0;
+                        break;
+                    }
+                }
+
+                sub = subs[sub_i++];
+                sub_end = sub.end_offs();
+                :PACT.Packfile.Subroutine new_sub(string(sub));
+
+                var names = sub.get_namespace().get_name();
+                var ns = ret.root;
+                for (string n in names) {
+                    if (n == '')
+                        continue;
+                    if (!(exists ns.contents[n]))
+                        ns.contents[n] = new PACT.Packfile.Namespace(n);
+                    ns = ns.contents[n];
+                }
+                if (exists ns.contents[string(sub)])
+                    die("Duplicate sub name"); // TODO handle multis
+                ns.contents[string(sub)] = new_sub;
+
+                // TODO: flags, outer, tags, multi, more?
+
+                sub = new_sub;
+
+                // Add currently active annotations.
+                push(sub.ops, debug);
+                for(var a in cur_annos)
+                    push(sub.ops, a.value());
+            }
+
+            // Check for dead code
+            if (sub_end == pc || sub == null) {
+                if (exists ret.root.contents['']) {
+                    sub = ret.root.contents[''];
+                } else {
+                    sub = new PACT.Packfile.Subroutine();
+                    sub.name = '';
+                    ret.root.contents[''] = sub;
+                }
+            }
+
+            // Insert label
+            push(sub.ops, new PACT.Packfile.Label('_'+string(pc)));
+
+            // Parse opcode
+            var    op   = map[bytecode[pc]];
+            string name = op.family_name();
+            :PACT.Packfile.Op pop(name);
+            push(sub.ops, pop);
+
+            var arg;
+            int argc;
+            switch(name) {
+            case 'set_args':
+            case 'get_results':
+            case 'get_params':
+            case 'set_returns':
+                :PACT.Packfile.Constant.Reference ref(packfile,
+                        PARROT_ARG_PMC, bytecode[++pc]);
+                push(pop.args, ref);
+                var arg_types = ret.pmcs[int(ref.value)];
+                argc = elements(arg_types);
+                for (i = 0; i < argc; ++i) {
+                    ++pc;
+                    arg = parse_arg(ret, int(arg_types[i]), bytecode[pc], pc);
+                    push(pop.args, arg);
+                }
+                break;
+
+            default:
+                argc = elements(op);
+                for (i = 0; i < argc; ++i) {
+                    ++pc;
+                    arg = parse_arg(ret, int(op[i]), bytecode[pc], pc);
+                    push(pop.args, arg);
+                }
+            }
+        }
+
+        self.pact = ret;
+    }
+}
