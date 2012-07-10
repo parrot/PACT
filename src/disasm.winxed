@@ -19,26 +19,6 @@ class PACT.Packfile.Register;
 class PACT.Packfile.Annotation;
 class PACT.Packfile.Debug;
 
-// Useful opcodes
-inline get_repr(var obj) return string {
-    string ret;
-    ${ get_repr ret, obj };
-    return ret;
-}
-
-inline inspect(var obj) return var {
-    var ret;
-    ${ inspect ret, obj };
-    return ret;
-}
-
-inline inspect_s(var obj, string name) return var {
-    var ret;
-    ${ inspect ret, obj, name };
-    return ret;
-}
-
-
 function read_packfile(var packfile) {
     // Often used variables
     int size, i;
