@@ -17,6 +17,7 @@ class SanityTest {
         assert.defined(imcc, 'IMCC exists');
 
         var view = imcc.compile(<<:
+.namespace [] # work around for segfault
 .sub 'test_imcc_1'
 .end
 :>>
