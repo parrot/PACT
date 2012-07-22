@@ -29,6 +29,8 @@ class SanityTest {
     }
 
     function test_loading() {
+        var assert = self.assert;
+
         load_bytecode('pact/packfile.pbc');
         assert.not_null(class PACT.Packfile, 'found Packfile');
 
