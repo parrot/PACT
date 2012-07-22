@@ -3,10 +3,6 @@
 function main[main]() {
     // Segfault in IMCC
     load_bytecode('rosella/core.pbc');
-    Rosella.initialize_rosella('test');
-    Rosella.Test.test(class SanityTest);
-
-    // Works
     (new SanityTest).test_imcc();
 }
 
