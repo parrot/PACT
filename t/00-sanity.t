@@ -21,7 +21,7 @@ class SanityTest {
 .end
 :>>
         );
-        assert.defined(view);
+        assert.defined(view, 'got something from IMCC');
         assert.instance_of(view, 'PackfileView');
 
         var packfile = new 'Packfile'(view);
