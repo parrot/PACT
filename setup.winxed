@@ -2,8 +2,16 @@
 
 // Build system for PACT, using Rosella.Winxed.Distutils
 
+
+////// Inlines for useful opcodes
+inline does(var pbc, string role) return int {
+    int ret;
+    ${ does ret, pbc, role };
+    return ret;
+}
+
 ////// Helpers to add a series of steps for a file.
-// Prefix arguments should not have .winxed, .pir, etc
+// Name arguments should not have .winxed, .pir, etc
 
 // Convert winxed file to a packfile
 function pbc_winxed(var pact, string name, string dir = 'src/') {
@@ -18,9 +26,39 @@ function installable_winxed(var pact, string name, string prefix) {
 }
 
 // Create an installable library from winxed
-function library_winxed(var pact, string prefix) {
-    pbc_winxed(pact, prefix);
-    push(pact['inst_lib'], prefix+'.pbc');
+function library_winxed(var pact, string name) {
+    pbc_winxed(pact, name);
+    pact['header_pbc'][name+'.winxed'] = name+'.pbc';
+    push(pact['inst_lib'], name+'.pbc');
+}
+
+////// Distutils stages
+// Create a header file from a pbc
+function build_header_pbc(var kv [slurpy, named]) {
+    if (!exists kv['header_pbc'])
+        return;
+
+    var hash = kv['header_pbc'];
+    var jobs = new 'ResizableStringArray';
+    string header, pbc;
+
+    for (header in hash) {
+        var depends = hash[header];
+        if (does(depends, 'array')) {
+            if (newer(header, depends))
+                continue;
+            pbc = shift(depends);
+        } else {
+            pbc = depends;
+            if (newer(header, pbc))
+                continue;
+        }
+        mkpath(dirname(header), 1 : [named('verbose')]);
+        string cmd = 'winxed_mk_header ' + pbc + ' > ' + header;
+        push(jobs, cmd);
+    }
+
+    return run_jobs(jobs);
 }
 
 function main[main](var argv) {
@@ -30,6 +68,9 @@ function main[main](var argv) {
         // Load and setup Rosella.Winxed.Distutils
         load_bytecode('rosella/winxed.pbc');
         Rosella.Winxed.Distutils.winxed_setup();
+
+        // Add new distutils stages
+        register_step_after('build', build_header_pbc);
 
         // Setup build hash
         var pact = {
@@ -46,6 +87,7 @@ function main[main](var argv) {
             'winxed_debug'     : false,
             'pir_winxed'       : {},
             'pbc_pir'          : {},
+            'header_pbc'       : {},
             'installable_pbc'  : {},
             'inst_lib'         : []
         };
