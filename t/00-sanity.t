@@ -1,11 +1,12 @@
 #!winxed
 
+$include 'Rosella/Core.winxed';
+$include 'Rosella/Test.winxed';
+
 class PACT.Packfile;
 class PACT.Packfile.Decompile;
 
 function main[main]() {
-    load_bytecode('rosella/core.pbc');
-    Rosella.initialize_rosella('test');
     Rosella.Test.test(class SanityTest);
 }
 
