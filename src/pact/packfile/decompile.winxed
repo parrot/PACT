@@ -18,12 +18,12 @@ class PACT.Packfile.Label;
 class PACT.Packfile.Register;
 class PACT.Packfile.Annotation;
 class PACT.Packfile.Debug;
-function init[load,init]() {
+function init[anon,load,init]() {
     load_bytecode('pact/packfile.pbc');
 }
 
 // Utility function to parse a argument
-function parse_arg(var packfile, int type, int arg, int pc) {
+function parse_arg[anon](var packfile, int type, int arg, int pc) {
     int cons = type & PARROT_ARG_CONSTANT;
     type = type & PARROT_ARG_TYPE_MASK;
     var ret;
