@@ -5,19 +5,8 @@
 // Get all the argument type constants for PCC
 $include_const 'call_bits.pasm';
 
-// Predeclare and load the PACT.Packfile classes
-class PACT.Packfile;
-class PACT.Packfile.Namespace;
-class PACT.Packfile.Constant;
-class PACT.Packfile.Constant.Reference;
-class PACT.Packfile.Constant.Key;
-class PACT.Packfile.Subroutine;
-class PACT.Packfile.Multi;
-class PACT.Packfile.Op;
-class PACT.Packfile.Label;
-class PACT.Packfile.Register;
-class PACT.Packfile.Annotation;
-class PACT.Packfile.Debug;
+$include 'pact/packfile.winxed';
+
 function init[anon,load,init]() {
     load_bytecode('pact/packfile.pbc');
 }

@@ -1,0 +1,11 @@
+class PACT.Packfile;
+class PACT.Packfile.Namespace;
+class PACT.Packfile.Constant;
+class PACT.Packfile.Constant.Reference;
+class PACT.Packfile.Constant.Key;
+class PACT.Packfile.Subroutine;
+class PACT.Packfile.Op;
+class PACT.Packfile.Label;
+class PACT.Packfile.Register;
+class PACT.Packfile.Annotation;
+class PACT.Packfile.Debug;
