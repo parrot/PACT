@@ -1,10 +1,6 @@
 #!winxed
 
-$include 'Rosella/Core.winxed';
-$include 'Rosella/Test.winxed';
-
-class PACT.Packfile;
-class PACT.Packfile.Decompile;
+$include 't/common.winxed';
 
 function main[main]() {
     Rosella.Test.test(class SanityTest);

@@ -1,0 +1,4 @@
+$include 'PACT/Packfile.winxed';
+$include 'PACT/Packfile/Decompile.winxed';
+$include 'Rosella/Core.winxed';
+$include 'Rosella/Test.winxed';
