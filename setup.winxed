@@ -6,14 +6,14 @@
 // Prefix arguments should not have .winxed, .pir, etc
 
 // Convert winxed file to a packfile
-function pbc_winxed(var pact, string prefix) {
-    pact['pir_winxed'][prefix+'.pir'] = prefix+'.winxed';
-    pact['pbc_pir'   ][prefix+'.pbc'] = prefix+'.pir';
+function pbc_winxed(var pact, string name, string dir = 'src/') {
+    pact['pir_winxed'][name+'.pir'] = dir+name+'.winxed';
+    pact['pbc_pir'   ][name+'.pbc'] = name+'.pir';
 }
 
 // Create an installable program from winxed
 function installable_winxed(var pact, string name, string prefix) {
-    pbc_winxed(pact, prefix);
+    pbc_winxed(pact, prefix, '');
     pact['installable_pbc'][name] = prefix+'.pbc';
 }
 
