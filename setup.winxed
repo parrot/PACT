@@ -46,11 +46,12 @@ function main[main](var argv) {
             'winxed_debug'     : false,
             'pir_winxed'       : {},
             'pbc_pir'          : {},
-            'installable_pbc'  : {}
+            'installable_pbc'  : {},
+            'inst_lib'         : []
         };
 
-        pbc_winxed(pact, 'pact/packfile');
-        pbc_winxed(pact, 'pact/packfile/decompile');
+        library_winxed(pact, 'pact/packfile');
+        library_winxed(pact, 'pact/packfile/decompile');
         installable_winxed(pact, 'pact_disasm', 'src/disasm');
 
         // Invoke distutils
