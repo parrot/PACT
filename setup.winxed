@@ -92,8 +92,8 @@ function main[main](var argv) {
             'inst_lib'         : []
         };
 
-        library_winxed(pact, 'pact/packfile');
-        library_winxed(pact, 'pact/packfile/decompile');
+        library_winxed(pact, 'PACT/Packfile');
+        library_winxed(pact, 'PACT/Packfile/Decompile');
         installable_winxed(pact, 'pact_disasm', 'src/disasm');
 
         // Invoke distutils

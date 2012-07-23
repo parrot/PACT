@@ -33,10 +33,10 @@ class SanityTest {
     function test_loading() {
         var assert = self.assert;
 
-        load_bytecode('pact/packfile.pbc');
+        load_bytecode('PACT/Packfile.pbc');
         assert.not_null(class PACT.Packfile, 'found Packfile');
 
-        load_bytecode('pact/packfile/decompile.pbc');
+        load_bytecode('PACT/Packfile/Decompile.pbc');
         assert.not_null(class PACT.Packfile.Decompile, 'found Decompile');
     }
 }
