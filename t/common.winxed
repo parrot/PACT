@@ -1,4 +1,10 @@
-$include 'PACT/Packfile.winxed';
-$include 'PACT/Packfile/Decompile.winxed';
+# Rosella classes (headers load PBC)
 $include 'Rosella/Core.winxed';
 $include 'Rosella/Test.winxed';
+
+# PACT classes
+$include 'PACT/Packfile.winxed';
+$include 'PACT/Packfile/Decompile.winxed';
+
+# Load PACT (Decompile loads Packfile)
+$load    'PACT/Packfile/Decompile.pbc';
