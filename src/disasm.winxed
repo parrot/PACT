@@ -2,12 +2,14 @@
 
 // Basic disassembler to demonstrate the PACT.Packfile classes
 
-class PACT.Packfile.Decompile;
+// Load disassembler
+$include 'PACT/Packfile/Decompile.winxed';
+$load    'PACT/Packfile/Decompile.pbc';
+
+// Load dumper for output
+$load 'dumper.pbc';
 
 function main[main](var argv) {
-    load_bytecode('pact/packfile/decompile.pbc');
-    load_bytecode('dumper.pbc');
-
     // Process arguments
     string progname = argv[0];
     if (elements(argv) != 2) {
