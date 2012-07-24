@@ -238,17 +238,19 @@ class PACT.Packfile.Decompile {
             // XXX: Doesn't handle overlapping subs
             // But that's okay right now, nobody generates them
             if (sub_i < subs_size && subs[sub_i].start_offs() == pc) {
-                // Pop off unneeded annotations and debugs?
-                for(i = elements(sub.ops) - 1; i >= 0; --i) {
-                    // XXX: Is there a better way to do this comparison?
-                    switch (typeof(sub.ops[i])) {
-                    case 'PACT;Packfile;Annotation':
-                    case 'PACT;Packfile;Debug':
-                        delete sub.ops[i];
-                        break;
-                    default:
-                        i = 0;
-                        break;
+                if(sub) {
+                    // Pop off unneeded annotations and debugs
+                    for(i = elements(sub.ops) - 1; i >= 0; --i) {
+                        // XXX: Is there a better way to do this comparison?
+                        switch (typeof(sub.ops[i])) {
+                        case 'PACT;Packfile;Annotation':
+                        case 'PACT;Packfile;Debug':
+                            delete sub.ops[i];
+                            break;
+                        default:
+                            i = 0;
+                            break;
+                        }
                     }
                 }
 
