@@ -89,7 +89,8 @@ function main[main](var argv) {
             'pbc_pir'          : {},
             'header_pbc'       : {},
             'installable_pbc'  : {},
-            'inst_lib'         : []
+            'inst_lib'         : [],
+            'prove_files'      : 't/*.t t/*/*.t'
         };
 
         library_winxed(pact, 'PACT/Packfile');
