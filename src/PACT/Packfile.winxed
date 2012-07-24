@@ -36,9 +36,9 @@ class PACT.Packfile {
         self.uuid_type = 0;
         self.uuid      = '';
 
-        var oplibs  = new 'ResizablePMCArray';
-        self.oplibs = oplibs;
-        oplibs[0] = new 'OpLib'(var('core_ops'));
+        self.oplibs = {
+            'core_ops': new 'OpLib'(var('core_ops'))
+        };
     }
 
     function set_uuid(int type, string uuid) {
