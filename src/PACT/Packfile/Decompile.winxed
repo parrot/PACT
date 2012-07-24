@@ -5,11 +5,9 @@
 // Get all the argument type constants for PCC
 $include_const 'call_bits.pasm';
 
+// Load PACT.Packfile
 $include 'PACT/Packfile.winxed';
-
-function init[anon,load,init]() {
-    load_bytecode('pact/packfile.pbc');
-}
+$load    'PACT/Packfile.pbc';
 
 // Utility function to parse a argument
 function parse_arg[anon](var packfile, int type, int arg, int pc) {
