@@ -33,6 +33,20 @@ class SanityTest {
 
         assert.not_null(class PACT.Packfile.Decompile, 'found Decompile');
     }
+
+    function test_compile() {
+        var assert = self.assert;
+
+        var pack = compile(<<:
+.namespace [] # work around for segfault
+.sub 'test_compile'
+.end
+:>>
+        );
+
+        assert.not_null(pack);
+        assert.instance_of(pack, 'Packfile');
+    }
 }
 
 # vim: se ft=winxed :

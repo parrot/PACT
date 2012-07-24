@@ -8,3 +8,10 @@ $include 'PACT/Packfile/Decompile.winxed';
 
 # Load PACT (Decompile loads Packfile)
 $load    'PACT/Packfile/Decompile.pbc';
+
+function compile(string pir) {
+    var imcc = compreg('PIR');
+    var view = imcc.compile(pir);
+    var pack = new 'Packfile'(view);
+    return pack;
+}
