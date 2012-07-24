@@ -1,3 +1,6 @@
+# For type bits
+$include_const 'call_bits.pasm';
+
 # Rosella classes (headers load PBC)
 $include 'Rosella/Core.winxed';
 $include 'Rosella/Test.winxed';
