@@ -15,3 +15,8 @@ function compile(string pir) {
     var pack = new 'Packfile'(view);
     return pack;
 }
+
+function decompile(var packfile) {
+    :PACT.Packfile.Decompile decomp(packfile);
+    return decomp.pact;
+}

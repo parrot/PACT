@@ -34,7 +34,7 @@ class SanityTest {
         assert.not_null(class PACT.Packfile.Decompile, 'found Decompile');
     }
 
-    function test_compile() {
+    function test_compile_decompile() {
         var assert = self.assert;
 
         var pack = compile(<<:
@@ -46,6 +46,9 @@ class SanityTest {
 
         assert.not_null(pack);
         assert.instance_of(pack, 'Packfile');
+
+        var pact = decompile(pack);
+        assert.instance_of(pact, class PACT.Packfile);
     }
 }
 
