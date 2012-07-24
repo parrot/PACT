@@ -61,6 +61,9 @@ class PACT.Packfile {
         print(",\n", indent, 'pmcs: ');
         dumper.dump('pmcs', self.pmcs);
 
+        print(",\n", indent, 'oplibs: ');
+        dumper.dump('oplibs', self.oplibs);
+
         print(",\n", indent, 'root: ');
         dumper.dump('root', self.root);
 
