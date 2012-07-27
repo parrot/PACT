@@ -1,12 +1,5 @@
 $include_const 'call_bits.pasm';
 
-// Useful opcodes
-inline get_iter(var obj) return var {
-    var ret;
-    ${ iter ret, obj };
-    return ret;
-}
-
 class PACT.Packfile {
     // Constants
     var floats;  // RFA
