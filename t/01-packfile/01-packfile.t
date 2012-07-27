@@ -39,6 +39,27 @@ class PackfileTest {
         assert.equal(1, pf.uuid_type);
         assert.equal(md5, pf.uuid);
     }
+
+    // Test that core_ops is loaded by default
+    function test_oplibs_core() {
+        var assert = self.assert;
+        :PACT.Packfile pf();
+        assert.exists_keyed_str(pf.oplibs, 'core_ops');
+        assert.instance_of(pf.oplibs['core_ops'], 'OpLib');
+    }
+
+    function test_oplibs_math() {
+        var assert = self.assert;
+        string math = 'math_ops';
+        loadlib(math);
+        :PACT.Packfile pf();
+        assert.not_exists_keyed_str(pf.oplibs, math);
+        assert.throws_nothing(function () {
+            pf.add_oplib(math);
+        });
+        assert.exists_keyed_str(pf.oplibs, math);
+        assert.instance_of(pf.oplibs[math], 'OpLib');
+    }
 }
 
 # vim: ft=winxed

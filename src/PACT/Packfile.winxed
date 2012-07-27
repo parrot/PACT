@@ -39,6 +39,17 @@ class PACT.Packfile {
         self.uuid      = uuid;
     }
 
+    function add_oplib(var name) {
+        if (exists self.oplibs[name])
+            return;
+
+        var oplib = new 'OpLib'(name);
+        if (oplib == null)
+            die("Couldn't get oplib '"+name+"'");
+
+        self.oplibs[name] = oplib;
+    }
+
     function __dump(var dumper, string label) {
         :(string indent, string subindent) = dumper.newIndent();
         say('{');
