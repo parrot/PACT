@@ -8,9 +8,6 @@ $load    'PACT/Packfile/Decompile.pbc';
 
 $include_const 'call_bits.pasm';
 
-// Load dumper for output
-$load 'dumper.pbc';
-
 // Useful opcode
 inline get_repr(var v) return string {
     string ret;
