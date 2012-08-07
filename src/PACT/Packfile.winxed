@@ -201,12 +201,13 @@ namespace PACT.Packfile {
             function Key[multi('_', 'Key')](var value) {
                 self.Key();
                 while (value != null) {
+                    int type = value.get_type();
                     if (value.is_register_reference()) {
-                        :PACT.Packfile.Register reg(value.get_type(),
+                        :PACT.Packfile.Register reg(type,
                                 value.get_register_idx());
                         push(self.value, reg);
                     } else {
-                        :PACT.Packfile.Constant c(value.get_type(), value);
+                        :PACT.Packfile.Constant c(type, value);
                         push(self.value, c);
                     }
                     value = shift_var(value);
