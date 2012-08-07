@@ -125,6 +125,18 @@ function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
             say("\n"); // Yes, two newlines
             show_namespace(sub_map, sc_map, v);
             break;
+
+        case 'PACT;Packfile;Multi':
+            // TODO: Fix this!
+            // uses same label for every canidate, which is _wrong_
+            for(var sub in v.canidates) {
+                say('.sub ' + string(sub_map[v.name]));
+                show_sub(sc_map, sub);
+                say('.end');
+                say();
+            }
+            break;
+
         default:
             die('Object of unexpected type (' + string(typeof(v))
                         + ') found in namespace');
