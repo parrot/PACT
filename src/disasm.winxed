@@ -61,7 +61,7 @@ function main[main](var argv) {
         s = v[i];
         print(string(i));
         if(s == null) {
-            say(' (null)');
+            say(' # null');
         } else {
             say(' ' + encoding_name(s) + ' "' + escape(s) + '"');
             sc_map[s] = i;
