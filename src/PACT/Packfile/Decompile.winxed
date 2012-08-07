@@ -238,7 +238,7 @@ class PACT.Packfile.Decompile {
             // XXX: Doesn't handle overlapping subs
             // But that's okay right now, nobody generates them
             if (sub_i < subs_size && subs[sub_i].start_offs() == pc) {
-                if(sub) {
+                if(sub != null) {
                     // Pop off unneeded annotations and debugs
                     for(i = elements(sub.ops) - 1; i >= 0; --i) {
                         // XXX: Is there a better way to do this comparison?
