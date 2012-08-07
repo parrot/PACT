@@ -63,7 +63,7 @@ function main[main](var argv) {
         if(s == null) {
             say(' (null)');
         } else {
-            say(' "' + escape(s) + '"');
+            say(' ' + encoding_name(s) + ' "' + escape(s) + '"');
             sc_map[s] = i;
         }
     }
