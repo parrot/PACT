@@ -209,6 +209,7 @@ namespace PACT.Packfile {
                         :PACT.Packfile.Constant c(value.get_type(), value);
                         push(self.value, c);
                     }
+                    value = shift_var(value);
                 }
             }
 
