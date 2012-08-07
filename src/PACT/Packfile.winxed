@@ -247,6 +247,11 @@ namespace PACT.Packfile {
     class Multi {
         var name;      // String
         var canidates; // RPA
+
+        function Multi(string name) {
+            self.name = name;
+            self.canidates = [];
+        }
     }
 
     // Below are in Subroutine.ops

@@ -267,11 +267,28 @@ class PACT.Packfile.Decompile {
                         ns.contents[n] = new PACT.Packfile.Namespace(n);
                     ns = ns.contents[n];
                 }
-                if (exists ns.contents[string(sub)])
-                    die("Duplicate sub name"); // TODO handle multis
-                ns.contents[string(sub)] = new_sub;
 
-                // TODO: flags, outer, tags, multi, more?
+                // Handle Multi
+                var multisig = sub.get_multisig();
+                if (multisig != null) {
+                    var multi;
+                    if (exists ns.contents[string(sub)]) {
+                        multi = ns.contents[string(sub)];
+                        if (!(multi instanceof PACT.Packfile.Multi))
+                            die("Duplicate sub name " + string(sub));
+                    } else {
+                        multi = new PACT.Packfile.Multi(string(sub));
+                        ns.contents[multi.name] = multi;
+                    }
+
+                    push(multi.canidates, new_sub);
+
+                    // TODO: Process multisig
+                } else {
+                    if (exists ns.contents[string(sub)])
+                        die("Duplicate sub name" + string(sub));
+                    ns.contents[string(sub)] = new_sub;
+                }
 
                 sub = new_sub;
 
