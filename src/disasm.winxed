@@ -6,8 +6,17 @@
 $include 'PACT/Packfile/Decompile.winxed';
 $load    'PACT/Packfile/Decompile.pbc';
 
+$include_const 'call_bits.pasm';
+
 // Load dumper for output
 $load 'dumper.pbc';
+
+// Useful opcode
+inline get_repr(var v) return string {
+    string ret;
+    ${ get_repr ret, v };
+    return ret;
+}
 
 function main[main](var argv) {
     // Process arguments
@@ -22,12 +31,214 @@ function main[main](var argv) {
     var packfile;
     try {
         :PACT.Packfile.Decompile decomp(filename);
-        _dumper(decomp.pact, 'Packfile');
+        packfile = decomp.pact;
     } catch (e) {
         cry( progname, ': Error during disassembly ', filename );
         cry( e.message );
         for ( string bt in e.backtrace_strings() )
             cry(bt);
         exit(1);
+    }
+
+    // Version number
+    say(".pact pbc 0\n");
+
+    // Constants
+    int i;
+    string s;
+    var v;
+    var vi;
+    var sc_map = {};
+    say('.constants num');
+    v = packfile.floats;
+    for (i = 0; i < elements(v); ++i)
+        say(string(i) + ' ' + string(v[i]));
+    say(".end\n");
+
+    say('.constants string');
+    v = packfile.strings;
+    for (i = 0; i < elements(v); ++i) {
+        s = v[i];
+        print(string(i));
+        if(s == null) {
+            say(' (null)');
+        } else {
+            say(' "' + escape(s) + '"');
+            sc_map[s] = i;
+        }
+    }
+    say(".end\n");
+
+    say('.constants pmc');
+    v = packfile.pmcs;
+    var sub_map = {};
+    for (i = 0; i < elements(v); ++i) {
+        vi = v[i];
+        print(string(i) + ' ' + string(typeof(vi)) + ' ');
+        switch(typeof(vi)) {
+        case 'Sub':
+            // label, name, options
+            sub_map[vi] = s = '_sub' + string(i);
+            print(s + ', sc'+ string(sc_map[string(vi)]));
+            // TODO: main, tags, subid, multi, etc
+            say();
+            break;
+
+        default:
+            try {
+                say(get_repr(vi));
+            } catch() {
+                try {
+                    say(string(vi));
+                } catch() {
+                    say('(Unprintable)');
+                }
+            }
+        }
+    }
+    say(".end\n");
+
+    // Oplibs
+    for (s in packfile.oplibs)
+        if (s != 'core_ops')
+            say('.oplib ' + s);
+
+    // Subs
+    show_namespace(sub_map, sc_map, packfile.root);
+}
+
+function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
+    for (string s in ns.contents) {
+        var v = ns.contents[s];
+        switch(typeof(v)) {
+        case 'PACT;Packfile;Subroutine':
+            say('.sub ' + string(sub_map[v.name]));
+            show_sub(sc_map, v);
+            say('.end');
+            say();
+            break;
+        case 'PACT;Packfile;Namespace':
+            push(path, sc_map[s]);
+            print('.namespace sc');
+            print(path[0]);
+            for(int i = 1; i < elements(path); ++i) {
+                print(', sc');
+                print(path[i]);
+            }
+            say("\n"); // Yes, two newlines
+            show_namespace(sub_map, sc_map, v);
+            break;
+        default:
+            die('Object of unexpected type (' + string(typeof(v))
+                        + ') found in namespace');
+        }
+    }
+}
+
+function show_sub(var sc_map, var sub) {
+    string label;
+    for(var op in sub.ops) {
+        switch(typeof(op)) {
+        case 'PACT;Packfile;Debug':
+            say('.debug sc' + string(sc_map[op.filename]));
+            break;
+        case 'PACT;Packfile;Annotation':
+            print('.annotate sc' + string(sc_map[op.name]) + ', ');
+            var c = op.value;
+            switch(typeof(c)) {
+            case 'PACT;Packfile;Constant;Reference':
+                if(c.type != PARROT_ARG_STRING)
+                    die("Unexpected annotation constant reference type " +
+                            c.type);
+                say('sc' + string(c.value));
+                break;
+
+            case 'PACT;Packfile;Constant':
+                switch(c.type) {
+                case PARROT_ARG_INTVAL:
+                    say(c.value);
+                    break;
+                case PARROT_ARG_STRING:
+                    say('sc' + string(sc_map[c.value]));
+                    break;
+                default:
+                    die("Unexpected annotation constant type " + c.type);
+                }
+                break;
+
+            default:
+                die("Unexpected annotation value type " + string(typeof(c)));
+            }
+            break;
+
+        case 'PACT;Packfile;Label':
+            if (label != null)
+                say(label + ':');
+
+            if (length(op.name) < 7)
+                label = op.name;
+            else
+                say(string(op.name) + ':');
+
+            break;
+
+        case 'PACT;Packfile;Op':
+            print(label + ":\t");
+            label = null;
+            print(op.name);
+
+            var args = op.args;
+            for(int i = 0; i < elements(args); ++i) {
+                print( i == 0 ? ' ' : ', ' );
+                var arg = args[i];
+                switch(typeof(arg)) {
+                case 'PACT;Packfile;Constant;Reference':
+                    switch(arg.type) {
+                    case PARROT_ARG_INTVAL:   die('Integer reference?');
+                    case PARROT_ARG_STRING:   print('sc'); break;
+                    case PARROT_ARG_PMC:      print('pc'); break;
+                    case PARROT_ARG_FLOATVAL: print('fc'); break;
+                    default: die('Unknown constref type ' + string(arg.type));
+                    }
+                    print(arg.value);
+                    break;
+
+                case 'PACT;Packfile;Constant':
+                    switch(arg.type) {
+                    case PARROT_ARG_INTVAL:
+                        print(arg.value);
+                        break;
+
+                    case PARROT_ARG_STRING:
+                        print('sc' + string(sc_map[op.value]));
+                        break;
+
+                    default:
+                        die('Unexpected constant type ' + string(arg.type));
+                    }
+                    break;
+
+                case 'PACT;Packfile;Register':
+                    switch(arg.type) {
+                    case PARROT_ARG_INTVAL:   print('i'); break;
+                    case PARROT_ARG_STRING:   print('s'); break;
+                    case PARROT_ARG_PMC:      print('p'); break;
+                    case PARROT_ARG_FLOATVAL: print('f'); break;
+                    default: die('Unknown register type ' + string(arg.type));
+                    }
+                    print(arg.number);
+                    break;
+
+                default:
+                    die('Unknown argument type ' + string(typeof(arg)));
+                }
+            }
+
+            say();
+            break;
+
+        default:
+            die("Unknown sub contents type " + string(typeof(op)));
+        }
     }
 }
