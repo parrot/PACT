@@ -50,7 +50,7 @@ function main[main](var argv) {
     say('.constants num');
     v = packfile.floats;
     for (i = 0; i < elements(v); ++i)
-        say(string(i) + ' ' + string(v[i]));
+        say(i, ' ', v[i]);
     say(".end\n");
 
     say('.constants string');
@@ -61,7 +61,7 @@ function main[main](var argv) {
         if(s == null) {
             say(' # null');
         } else {
-            say(' ' + encoding_name(s) + ' "' + escape(s) + '"');
+            say(' ', encoding_name(s), ' "', escape(s), '"');
             sc_map[s] = i;
         }
     }
@@ -73,12 +73,12 @@ function main[main](var argv) {
     sub_map.set_key_type(Hash_key_type_PMC_ptr);
     for (i = 0; i < elements(v); ++i) {
         vi = v[i];
-        print(string(i) + ' ' + string(typeof(vi)) + ' ');
+        print(i, ' ', typeof(vi), ' ');
         switch(typeof(vi)) {
         case 'PACT;Packfile;Subroutine':
             // label, name, options
             sub_map[vi] = s = '_sub' + string(i);
-            print(s + ', sc'+ string(sc_map[vi.name]));
+            print(s, ', sc', sc_map[vi.name]);
             // TODO: main, tags, subid, multi, etc
 
             if (vi.multi_sig != null) {
@@ -102,7 +102,7 @@ function main[main](var argv) {
                         break;
 
                     case 'String':
-                        print('sc' + string(sc_map[arg]));
+                        print('sc', sc_map[arg]);
                         break;
 
                     default:
@@ -132,7 +132,7 @@ function main[main](var argv) {
     // Oplibs
     for (s in packfile.oplibs)
         if (s != 'core_ops')
-            say('.oplib ' + s);
+            say('.oplib ', s);
 
     // Subs
     show_namespace(sub_map, sc_map, packfile.root);
@@ -143,7 +143,7 @@ function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
         var v = ns.contents[s];
         switch(typeof(v)) {
         case 'PACT;Packfile;Subroutine':
-            say('.sub ' + string(sub_map[v]));
+            say('.sub ', sub_map[v]);
             show_sub(sc_map, v);
             say('.end');
             say();
@@ -162,7 +162,7 @@ function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
 
         case 'PACT;Packfile;Multi':
             for(var sub in v.canidates) {
-                say('.sub ' + string(sub_map[sub]));
+                say('.sub ', sub_map[sub]);
                 show_sub(sc_map, sub);
                 say('.end');
                 say();
@@ -181,17 +181,17 @@ function show_sub(var sc_map, var sub) {
     for(var op in sub.ops) {
         switch(typeof(op)) {
         case 'PACT;Packfile;Debug':
-            say('.debug sc' + string(sc_map[op.filename]));
+            say('.debug sc', sc_map[op.filename]);
             break;
         case 'PACT;Packfile;Annotation':
-            print('.annotate sc' + string(sc_map[op.name]) + ', ');
+            print('.annotate sc', sc_map[op.name], ', ');
             var c = op.value;
             switch(typeof(c)) {
             case 'PACT;Packfile;Constant;Reference':
                 if(c.type != PARROT_ARG_STRING)
                     die("Unexpected annotation constant reference type " +
                             c.type);
-                say('sc' + string(c.value));
+                say('sc', c.value);
                 break;
 
             case 'PACT;Packfile;Constant':
@@ -200,7 +200,7 @@ function show_sub(var sc_map, var sub) {
                     say(c.value);
                     break;
                 case PARROT_ARG_STRING:
-                    say('sc' + string(sc_map[c.value]));
+                    say('sc', sc_map[c.value]);
                     break;
                 default:
                     die("Unexpected annotation constant type " + c.type);
@@ -214,17 +214,17 @@ function show_sub(var sc_map, var sub) {
 
         case 'PACT;Packfile;Label':
             if (label != null)
-                say(label + ':');
+                say(label, ':');
 
             if (length(op.name) < 7)
                 label = op.name;
             else
-                say(string(op.name) + ':');
+                say(op.name, ':');
 
             break;
 
         case 'PACT;Packfile;Op':
-            print(label + ":\t");
+            print(label, ":\t");
             label = null;
             print(op.name);
 
@@ -251,7 +251,7 @@ function show_sub(var sc_map, var sub) {
                         break;
 
                     case PARROT_ARG_STRING:
-                        print('sc' + string(sc_map[op.value]));
+                        print('sc', string(sc_map[op.value]));
                         break;
 
                     default:
