@@ -1,5 +1,7 @@
 $include_const 'call_bits.pasm';
 
+class Sub; // Core type
+
 class PACT.Packfile {
     // Constants
     var floats;  // RFA
@@ -221,8 +223,9 @@ namespace PACT.Packfile {
     // Below are found in Namespace.contents
 
     class Subroutine {
-        var name;      // String
-        var ops;       // RPA
+        var name; // String
+        var ops;  // RPA
+        var sub;  // Actual sub PMC (for during {dis,}assembly)
         
         // Stored by Sub PMC
         // visit:  namespace_name, multi_sig, outer_sub, lex_info
@@ -237,6 +240,12 @@ namespace PACT.Packfile {
         function Subroutine(string name) {
             self.Subroutine();
             self.name = name;
+        }
+
+        function Subroutine(:Sub sub) {
+            self.Subroutine();
+            self.name = string(sub);
+            self.sub  = sub;
         }
 
         function __dump(var dumper, string label) {
