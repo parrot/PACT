@@ -80,6 +80,38 @@ function main[main](var argv) {
             sub_map[vi] = s = '_sub' + string(i);
             print(s + ', sc'+ string(sc_map[vi.name]));
             // TODO: main, tags, subid, multi, etc
+
+            if (vi.multi_sig != null) {
+                print(', multi (');
+                int comma = 0;
+                for (var arg in vi.multi_sig) {
+                    if (comma)
+                        print(', ');
+                    else
+                        comma = 1;
+
+                    switch(typeof(arg)) {
+                    case 'Integer':
+                        switch(int(arg)) {
+                        case -1: print('i'); break;
+                        case -2: print('f'); break;
+                        case -3: print('s'); break;
+                        case -4: print('p'); break;
+                        default: print(arg); break; // XXX: What is this?
+                        }
+                        break;
+
+                    case 'String':
+                        print('sc' + string(sc_map[arg]));
+                        break;
+
+                    default:
+                        die('Unexpected type in multi_sig');
+                    }
+                }
+                print(')');
+            }
+
             say();
             break;
 

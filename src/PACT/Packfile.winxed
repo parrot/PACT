@@ -223,9 +223,10 @@ namespace PACT.Packfile {
     // Below are found in Namespace.contents
 
     class Subroutine {
-        var name; // String
-        var ops;  // RPA
-        var sub;  // Actual sub PMC (for during {dis,}assembly)
+        var name;       // String
+        var ops;        // RPA
+        var sub;        // Actual sub PMC (for during {dis,}assembly)
+        var multi_sig;  // multi signature (some kind of array)
         
         // Stored by Sub PMC
         // visit:  namespace_name, multi_sig, outer_sub, lex_info
@@ -233,8 +234,9 @@ namespace PACT.Packfile {
         //    hll_name, comp_flags, vtable_index, registers, subid
 
         function Subroutine() {
-            self.name = null;
-            self.ops  = [];
+            self.name      = null;
+            self.ops       = [];
+            self.multi_sig = null;
         }
 
         function Subroutine(string name) {
@@ -244,8 +246,9 @@ namespace PACT.Packfile {
 
         function Subroutine(:Sub sub) {
             self.Subroutine();
-            self.name = string(sub);
-            self.sub  = sub;
+            self.name       = string(sub);
+            self.sub        = sub;
+            self.multi_sig  = sub.get_multisig();
         }
 
         function __dump(var dumper, string label) {
