@@ -39,8 +39,7 @@ class EmptySubTest {
                 fia = pmc;
                 break;
 
-            // XXX: At some point, this might be a PACT.Packfile.Subroutine
-            case 'Sub':
+            case 'PACT;Packfile;Subroutine':
                 sub = pmc;
                 break;
 
@@ -53,7 +52,7 @@ class EmptySubTest {
         assert.equal(0, elements(fia), 'FIA is empty (PCC)');
 
         assert.not_null(sub, 'got Sub');
-        assert.equal('empty_sub', string(sub));
+        assert.equal('empty_sub', sub.name);
 
         // 4 strings: filename, subname, empty, 'parrot'
         assert.equal(4, elements(pact.strings), '4 strings');

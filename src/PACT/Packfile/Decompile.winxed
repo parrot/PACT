@@ -121,18 +121,24 @@ class PACT.Packfile.Decompile {
         ret.pmcs = pmcs;
         for (i = 0; i < size; ++i) {
             var c = var(constants[i]);
-            if (c instanceof 'Sub')
+            if (c instanceof 'Sub') {
+                // Create a new Packfile.Subroutine that we'll reference
+                // later.
+                c = new PACT.Packfile.Subroutine(c);
                 push(subs, c); // TODO: Convert to Packfile.Subroutine
+            }
+
             if (c instanceof 'Key')
                 c = new PACT.Packfile.Constant.Key(c);
+
             pmcs[i] = c;
         }
         int subs_size = elements(subs);
 
         // Make sure the subs are sorted according to the code offsets
         subs.sort(function(a, b) {
-            int a_i = a.start_offs();
-            int b_i = b.start_offs();
+            int a_i = a.sub.start_offs();
+            int b_i = b.sub.start_offs();
             if (a_i == b_i) return 0;
             if (a_i < b_i) return -1;
             return 1;
@@ -237,7 +243,7 @@ class PACT.Packfile.Decompile {
             // Update sub
             // XXX: Doesn't handle overlapping subs
             // But that's okay right now, nobody generates them
-            if (sub_i < subs_size && subs[sub_i].start_offs() == pc) {
+            if (sub_i < subs_size && subs[sub_i].sub.start_offs() == pc) {
                 if(sub != null) {
                     // Pop off unneeded annotations and debugs
                     for(i = elements(sub.ops) - 1; i >= 0; --i) {
@@ -255,10 +261,10 @@ class PACT.Packfile.Decompile {
                 }
 
                 sub = subs[sub_i++];
-                sub_end = sub.end_offs();
-                :PACT.Packfile.Subroutine new_sub(string(sub));
+                sub_end = sub.sub.end_offs();
+                string name = sub.name;
 
-                var names = sub.get_namespace().get_name();
+                var names = sub.sub.get_namespace().get_name();
                 var ns = ret.root;
                 for (string n in names) {
                     if (n == '')
@@ -269,28 +275,26 @@ class PACT.Packfile.Decompile {
                 }
 
                 // Handle Multi
-                var multisig = sub.get_multisig();
+                var multisig = sub.sub.get_multisig();
                 if (multisig != null) {
                     var multi;
-                    if (exists ns.contents[string(sub)]) {
-                        multi = ns.contents[string(sub)];
+                    if (exists ns.contents[name]) {
+                        multi = ns.contents[name];
                         if (!(multi instanceof PACT.Packfile.Multi))
-                            die("Duplicate sub name " + string(sub));
+                            die("Duplicate sub name " + name);
                     } else {
-                        multi = new PACT.Packfile.Multi(string(sub));
-                        ns.contents[multi.name] = multi;
+                        multi = new PACT.Packfile.Multi(name);
+                        ns.contents[name] = multi;
                     }
 
-                    push(multi.canidates, new_sub);
+                    push(multi.canidates, sub);
 
                     // TODO: Process multisig
                 } else {
-                    if (exists ns.contents[string(sub)])
-                        die("Duplicate sub name" + string(sub));
-                    ns.contents[string(sub)] = new_sub;
+                    if (exists ns.contents[name])
+                        die("Duplicate sub name" + name);
+                    ns.contents[name] = sub;
                 }
-
-                sub = new_sub;
 
                 // Add currently active annotations.
                 push(sub.ops, debug);
