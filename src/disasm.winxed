@@ -115,6 +115,20 @@ function main[main](var argv) {
             say();
             break;
 
+        case 'PACT;Packfile;Constant;Key':
+            print('Key [ ');
+            int comma = 0;
+            for (var arg in vi.value) {
+                if (comma)
+                    print(', ');
+                else
+                    comma = 1;
+
+                show_argument(sc_map, arg);
+            }
+            say(' ]');
+            break;
+
         default:
             print(typeof(vi), ' ');
             try {
