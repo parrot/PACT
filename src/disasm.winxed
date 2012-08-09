@@ -73,12 +73,12 @@ function main[main](var argv) {
     sub_map.set_key_type(Hash_key_type_PMC_ptr);
     for (i = 0; i < elements(v); ++i) {
         vi = v[i];
-        print(i, ' ', typeof(vi), ' ');
+        print(i, ' ');
         switch(typeof(vi)) {
         case 'PACT;Packfile;Subroutine':
             // label, name, options
             sub_map[vi] = s = '_sub' + string(i);
-            print(s, ', sc', sc_map[vi.name]);
+            print('Sub ', s, ', sc', sc_map[vi.name]);
             // TODO: main, tags, subid, multi, etc
 
             if (vi.multi_sig != null) {
@@ -116,6 +116,7 @@ function main[main](var argv) {
             break;
 
         default:
+            print(typeof(vi), ' ');
             try {
                 say(get_repr(vi));
             } catch() {
