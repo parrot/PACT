@@ -232,48 +232,7 @@ function show_sub(var sc_map, var sub) {
             var args = op.args;
             for(int i = 0; i < elements(args); ++i) {
                 print( i == 0 ? ' ' : ', ' );
-                var arg = args[i];
-                switch(typeof(arg)) {
-                case 'PACT;Packfile;Constant;Reference':
-                    switch(arg.type) {
-                    case PARROT_ARG_INTVAL:   die('Integer reference?');
-                    case PARROT_ARG_STRING:   print('sc'); break;
-                    case PARROT_ARG_PMC:      print('pc'); break;
-                    case PARROT_ARG_FLOATVAL: print('fc'); break;
-                    default: die('Unknown constref type ' + string(arg.type));
-                    }
-                    print(arg.value);
-                    break;
-
-                case 'PACT;Packfile;Constant':
-                    switch(arg.type) {
-                    case PARROT_ARG_INTVAL:
-                        print(arg.value);
-                        break;
-
-                    case PARROT_ARG_STRING:
-                        print('sc', string(sc_map[op.value]));
-                        break;
-
-                    default:
-                        die('Unexpected constant type ' + string(arg.type));
-                    }
-                    break;
-
-                case 'PACT;Packfile;Register':
-                    switch(arg.type) {
-                    case PARROT_ARG_INTVAL:   print('i'); break;
-                    case PARROT_ARG_STRING:   print('s'); break;
-                    case PARROT_ARG_PMC:      print('p'); break;
-                    case PARROT_ARG_FLOATVAL: print('f'); break;
-                    default: die('Unknown register type ' + string(arg.type));
-                    }
-                    print(arg.number);
-                    break;
-
-                default:
-                    die('Unknown argument type ' + string(typeof(arg)));
-                }
+                show_argument(sc_map, args[i]);
             }
 
             say();
@@ -282,5 +241,49 @@ function show_sub(var sc_map, var sub) {
         default:
             die("Unknown sub contents type " + string(typeof(op)));
         }
+    }
+}
+
+function show_argument(var sc_map, var arg) {
+    switch(typeof(arg)) {
+    case 'PACT;Packfile;Constant;Reference':
+        switch(arg.type) {
+        case PARROT_ARG_INTVAL:   die('Integer reference?');
+        case PARROT_ARG_STRING:   print('sc'); break;
+        case PARROT_ARG_PMC:      print('pc'); break;
+        case PARROT_ARG_FLOATVAL: print('fc'); break;
+        default: die('Unknown constref type ' + string(arg.type));
+        }
+        print(arg.value);
+        break;
+
+    case 'PACT;Packfile;Constant':
+        switch(arg.type) {
+        case PARROT_ARG_INTVAL:
+            print(arg.value);
+            break;
+
+        case PARROT_ARG_STRING:
+            print('sc', string(sc_map[arg.value]));
+            break;
+
+        default:
+            die('Unexpected constant type ' + string(arg.type));
+        }
+        break;
+
+    case 'PACT;Packfile;Register':
+        switch(arg.type) {
+        case PARROT_ARG_INTVAL:   print('i'); break;
+        case PARROT_ARG_STRING:   print('s'); break;
+        case PARROT_ARG_PMC:      print('p'); break;
+        case PARROT_ARG_FLOATVAL: print('f'); break;
+        default: die('Unknown register type ' + string(arg.type));
+        }
+        print(arg.number);
+        break;
+
+    default:
+        die('Unknown argument type ' + string(typeof(arg)));
     }
 }
