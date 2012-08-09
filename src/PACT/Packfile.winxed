@@ -252,8 +252,19 @@ namespace PACT.Packfile {
         }
 
         function __dump(var dumper, string label) {
-            print(self.name, ': ');
-            dumper.dump(label, self.ops);
+            :(string indent, string subindent) = dumper.newIndent();
+            say('{');
+
+            say(indent, 'name: "', self.name, '",');
+
+            print(indent, 'multi_sig: ');
+            dumper.dump('multi_sig', self.multi_sig);
+
+            print(",\n", indent, 'ops: ');
+            dumper.dump('ops', self.ops);
+
+            print("\n", subindent, '}');
+            dumper.deleteIndent();
         }
     }
 
@@ -264,6 +275,11 @@ namespace PACT.Packfile {
         function Multi(string name) {
             self.name = name;
             self.canidates = [];
+        }
+
+        function __dump(var dumper, string label) {
+            print(self.name, ': ');
+            dumper.dump('canidates', self.canidates);
         }
     }
 
