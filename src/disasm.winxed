@@ -7,6 +7,7 @@ $include 'PACT/Packfile/Decompile.winxed';
 $load    'PACT/Packfile/Decompile.pbc';
 
 $include_const 'call_bits.pasm';
+$include_const 'hash_key_type.pasm';
 
 // Useful opcode
 inline get_repr(var v) return string {
@@ -69,14 +70,15 @@ function main[main](var argv) {
     say('.constants pmc');
     v = packfile.pmcs;
     var sub_map = {};
+    sub_map.set_key_type(Hash_key_type_PMC_ptr);
     for (i = 0; i < elements(v); ++i) {
         vi = v[i];
         print(string(i) + ' ' + string(typeof(vi)) + ' ');
         switch(typeof(vi)) {
-        case 'Sub':
+        case 'PACT;Packfile;Subroutine':
             // label, name, options
             sub_map[vi] = s = '_sub' + string(i);
-            print(s + ', sc'+ string(sc_map[string(vi)]));
+            print(s + ', sc'+ string(sc_map[vi.name]));
             // TODO: main, tags, subid, multi, etc
             say();
             break;
@@ -109,7 +111,7 @@ function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
         var v = ns.contents[s];
         switch(typeof(v)) {
         case 'PACT;Packfile;Subroutine':
-            say('.sub ' + string(sub_map[v.name]));
+            say('.sub ' + string(sub_map[v]));
             show_sub(sc_map, v);
             say('.end');
             say();
@@ -127,10 +129,8 @@ function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
             break;
 
         case 'PACT;Packfile;Multi':
-            // TODO: Fix this!
-            // uses same label for every canidate, which is _wrong_
             for(var sub in v.canidates) {
-                say('.sub ' + string(sub_map[v.name]));
+                say('.sub ' + string(sub_map[sub]));
                 show_sub(sc_map, sub);
                 say('.end');
                 say();
