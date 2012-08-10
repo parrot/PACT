@@ -112,6 +112,9 @@ function main[main](var argv) {
                 print(')');
             }
 
+            if (vi === packfile.main)
+                print(', main');
+
             say();
             break;
 

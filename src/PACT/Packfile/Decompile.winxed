@@ -61,6 +61,10 @@ class PACT.Packfile.Decompile {
         if ( !(packfile instanceof 'Packfile') )
             die("Need a PBC filename or Packfile PMC");
         self.packfile = packfile;
+        var view = packfile.view();
+        cry(typeof(packfile), ' ', typeof(view), ' ', view);
+        if ( !(view instanceof 'PackfileView') )
+            die('7?!?!?');
 
         :PACT.Packfile ret();
         ret.set_uuid(int(packfile['uuid_type']), string(packfile['uuid']));
@@ -117,15 +121,18 @@ class PACT.Packfile.Decompile {
 
         size = constants.pmc_count();
         var pmcs = new 'FixedPMCArray'(size);
-        var subs = [];
         ret.pmcs = pmcs;
+        var subs = [];
+        var main = view.main_sub();
         for (i = 0; i < size; ++i) {
             var c = var(constants[i]);
             if (c instanceof 'Sub') {
                 // Create a new Packfile.Subroutine that we'll reference
                 // later.
                 c = new PACT.Packfile.Subroutine(c);
-                push(subs, c); // TODO: Convert to Packfile.Subroutine
+                push(subs, c);
+                if (c.sub === main)
+                    ret.main = c;
             }
 
             if (c instanceof 'Key')
@@ -143,6 +150,8 @@ class PACT.Packfile.Decompile {
             if (a_i < b_i) return -1;
             return 1;
         });
+
+        // TODO: load main and tags from Packfile
 
         // Load annotations
         var annos;
