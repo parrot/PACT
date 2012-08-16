@@ -241,17 +241,22 @@ function show_sub(var sc_map, var sub) {
             if (label != null)
                 say(label, ':');
 
-            if (length(op.name) < 7)
+            if (length(op.name) < 7) { // 7 == 8 tabstop - ':'
                 label = op.name;
-            else
+            } else {
+                // Print long ones immediately
+                label = null;
                 say(op.name, ':');
+            }
 
             break;
 
         case 'PACT;Packfile;Op':
-            print(label, ":\t");
+            if (label != null)
+                print(label, ':');
             label = null;
-            print(op.name);
+
+            print("\t", op.name);
 
             var args = op.args;
             for(int i = 0; i < elements(args); ++i) {
