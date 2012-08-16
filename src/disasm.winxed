@@ -6,10 +6,11 @@
 $include 'PACT/Packfile/Decompile.winxed';
 $load    'PACT/Packfile/Decompile.pbc';
 
+// Constants needed for later
 $include_const 'call_bits.pasm';
 $include_const 'hash_key_type.pasm';
 
-// Useful opcode
+// Useful opcode for displaying novel PMC types
 inline get_repr(var v) return string {
     string ret;
     ${ get_repr ret, v };
@@ -25,7 +26,7 @@ function main[main](var argv) {
     }
     string filename = argv[1];
 
-    // Get a Packfile
+    // Get a PACT.Packfile
     var packfile;
     try {
         :PACT.Packfile.Decompile decomp(filename);
@@ -41,18 +42,21 @@ function main[main](var argv) {
     // Version number
     say(".pact pbc 0\n");
 
-    // Constants
+    // Generic variables for later
     int i;
     string s;
     var v;
     var vi;
-    var sc_map = {};
+
+    // Float Constants
     say('.constants num');
     v = packfile.floats;
     for (i = 0; i < elements(v); ++i)
         say(i, ' ', v[i]);
     say(".end\n");
 
+    // String Constants
+    var sc_map = {}; // Map from string values to constant index
     say('.constants string');
     v = packfile.strings;
     for (i = 0; i < elements(v); ++i) {
@@ -67,20 +71,25 @@ function main[main](var argv) {
     }
     say(".end\n");
 
+    var sub_map = {}; // Map from Packfile.Subroutine to label name
+    // It needs to be keyed on PMC identity, not hash or string
+    sub_map.set_key_type(Hash_key_type_PMC_ptr);
+
+    // PMC Constants
     say('.constants pmc');
     v = packfile.pmcs;
-    var sub_map = {};
-    sub_map.set_key_type(Hash_key_type_PMC_ptr);
     for (i = 0; i < elements(v); ++i) {
         vi = v[i];
         print(i, ' ');
         switch(typeof(vi)) {
-        case 'PACT;Packfile;Subroutine':
-            // label, name, options
+        case 'PACT;Packfile;Subroutine': // print: label, name, options
+            // Generate and store a label
             sub_map[vi] = s = '_sub' + string(i);
             print('Sub ', s, ', sc', sc_map[vi.name]);
-            // TODO: main, tags, subid, multi, etc
 
+            // TODO: main, tags, subid, etc
+
+            // Handle a multi signature
             if (vi.multi_sig != null) {
                 print(', multi (');
                 int comma = 0;
@@ -115,7 +124,7 @@ function main[main](var argv) {
             say();
             break;
 
-        case 'PACT;Packfile;Constant;Key':
+        case 'PACT;Packfile;Constant;Key': // print key contents
             print('Key [ ');
             int comma = 0;
             for (var arg in vi.value) {
@@ -124,20 +133,22 @@ function main[main](var argv) {
                 else
                     comma = 1;
 
+                // Key contents are similar to opcode arguments
                 show_argument(sc_map, arg);
             }
             say(' ]');
             break;
 
-        default:
+        default: // type, repr
             print(typeof(vi), ' ');
+            // Try to show something
             try {
-                say(get_repr(vi));
+                say(get_repr(vi));  // repr first
             } catch() {
                 try {
-                    say(string(vi));
+                    say(string(vi)); // string conversion
                 } catch() {
-                    say('(Unprintable)');
+                    say('(Unprintable)'); // Give up
                 }
             }
         }
@@ -153,6 +164,7 @@ function main[main](var argv) {
     show_namespace(sub_map, sc_map, packfile.root);
 }
 
+// Display the path for a namespace
 function name_namespace(var path) {
     // Print the path to the new namespace
     print('.namespace sc');
@@ -164,13 +176,20 @@ function name_namespace(var path) {
     say("\n"); // Yes, two newlines
 }
 
+// Show the contents of a namespace
+// Arguments:
+//    sub_map = Hash:  PACT.Packfile.Subroutine -> String label
+//    sc_map  = Hash:  String -> Constant index
+//    ns      = PACT.Packfile.Namespace: thing to print
+//    path    = Path from root to current namespace (default nothing)
+//              RPA:  Integers for string constants
 function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
     for (string s in ns.contents) {
         var v = ns.contents[s];
         switch(typeof(v)) {
         case 'PACT;Packfile;Subroutine':
-            say('.sub ', sub_map[v]);
-            show_sub(sc_map, v);
+            say('.sub ', sub_map[v]); // Show the label
+            show_sub(sc_map, v);      // Then show the sub itself
             say('.end');
             say();
             break;
@@ -186,6 +205,7 @@ function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
             break;
 
         case 'PACT;Packfile;Multi':
+            // Just iterate over the canidates
             for(var sub in v.canidates) {
                 say('.sub ', sub_map[sub]);
                 show_sub(sc_map, sub);
@@ -201,6 +221,9 @@ function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
     }
 }
 
+// Print out the contents of a subroutine
+//  sc_map = Hash: string to constant index
+//  sub    = PACT.Packfile.Subroutine to print
 function show_sub(var sc_map, var sub) {
     string label;
     for(var op in sub.ops) {
@@ -208,9 +231,11 @@ function show_sub(var sc_map, var sub) {
         case 'PACT;Packfile;Debug':
             say('.debug sc', sc_map[op.filename]);
             break;
+
         case 'PACT;Packfile;Annotation':
             print('.annotate sc', sc_map[op.name], ', ');
             var c = op.value;
+            // Annotation values can be integers or strings
             switch(typeof(c)) {
             case 'PACT;Packfile;Constant;Reference':
                 if(c.type != PARROT_ARG_STRING)
@@ -238,9 +263,11 @@ function show_sub(var sc_map, var sub) {
             break;
 
         case 'PACT;Packfile;Label':
+            // If we already found a label, print it
             if (label != null)
                 say(label, ':');
 
+            // Store short labels to print before opcode
             if (length(op.name) < 7) { // 7 == 8 tabstop - ':'
                 label = op.name;
             } else {
@@ -252,6 +279,7 @@ function show_sub(var sc_map, var sub) {
             break;
 
         case 'PACT;Packfile;Op':
+            // If we have a short label, print it
             if (label != null)
                 print(label, ':');
             label = null;
@@ -273,6 +301,10 @@ function show_sub(var sc_map, var sub) {
     }
 }
 
+// Display the argument for an opcode or key
+//  sc_map = Hash: string to constant index
+//  arg    = argument to print
+//           should be a constant or register
 function show_argument(var sc_map, var arg) {
     switch(typeof(arg)) {
     case 'PACT;Packfile;Constant;Reference':
