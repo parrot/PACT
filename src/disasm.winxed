@@ -153,6 +153,17 @@ function main[main](var argv) {
     show_namespace(sub_map, sc_map, packfile.root);
 }
 
+function name_namespace(var path) {
+    // Print the path to the new namespace
+    print('.namespace sc');
+    print(path[0]);
+    for(int i = 1; i < elements(path); ++i) {
+        print(', sc');
+        print(path[i]);
+    }
+    say("\n"); // Yes, two newlines
+}
+
 function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
     for (string s in ns.contents) {
         var v = ns.contents[s];
@@ -163,16 +174,15 @@ function show_namespace(var sub_map, var sc_map, var ns, var path = []) {
             say('.end');
             say();
             break;
+
         case 'PACT;Packfile;Namespace':
-            push(path, sc_map[s]);
-            print('.namespace sc');
-            print(path[0]);
-            for(int i = 1; i < elements(path); ++i) {
-                print(', sc');
-                print(path[i]);
-            }
-            say("\n"); // Yes, two newlines
-            show_namespace(sub_map, sc_map, v);
+            push(path, sc_map[s]); // Update and the path
+            name_namespace(path);
+
+            show_namespace(sub_map, sc_map, v, path);
+
+            pop_var(path); // Restore and print the path
+            name_namespace(path);
             break;
 
         case 'PACT;Packfile;Multi':
