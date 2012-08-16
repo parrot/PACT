@@ -36,11 +36,13 @@ class PACT.Packfile {
         };
     }
 
+    // UUID type and value should probably be set together
     function set_uuid(int type, string uuid) {
         self.uuid_type = type;
         self.uuid      = uuid;
     }
 
+    // Simplify adding an oplib by name
     function add_oplib(var name) {
         if (exists self.oplibs[name])
             return;
@@ -79,8 +81,6 @@ class PACT.Packfile {
         print("\n", subindent, '}');
         dumper.deleteIndent();
     }
-
-    // Functions similar to PackfileView
 }
 
 namespace PACT.Packfile {
@@ -88,7 +88,8 @@ namespace PACT.Packfile {
         var name;     // String
         var contents; // Hash
 
-        // Should act hash-like
+        // TODO: Should act hash-like
+
         function Namespace() {
             self.Namespace('');
         }
@@ -107,6 +108,8 @@ namespace PACT.Packfile {
     class Constant {
         var value;
         var type;  // Integer, from call_bits
+
+        // Constant has a multi constructor to set type automagically
 
         function Constant(int value) {
             self.value = value;
@@ -128,6 +131,8 @@ namespace PACT.Packfile {
             self.type  = PARROT_ARG_PMC;
         }
 
+        // The explicit type and value constructor
+        // Also casts the value, just in case
         function Constant(int type, var value) {
             self.type = type;
             switch (type) {
@@ -175,8 +180,6 @@ namespace PACT.Packfile {
             }
             dumper.dump(label, self.value);
         }
-
-        // set from all types?
     }
 
     namespace Constant {
@@ -191,15 +194,18 @@ namespace PACT.Packfile {
                 self.packfile = packfile;
             }
 
-            // dereference
+            // TODO: dereference?
         }
 
+        // A more user-friendly interface to a key
         class Key : Constant {
+            // Start empty
             function Key() {
                 self.type  = PARROT_ARG_PMC;
                 self.value = [];
             }
 
+            // Deconstruct an existing key
             function Key[multi('_', 'Key')](var value) {
                 self.Key();
                 while (value != null) {
@@ -228,7 +234,7 @@ namespace PACT.Packfile {
         var sub;        // Actual sub PMC (for during {dis,}assembly)
         var multi_sig;  // multi signature (some kind of array)
         
-        // Stored by Sub PMC
+        // Stored by Sub PMC (for reference)
         // visit:  namespace_name, multi_sig, outer_sub, lex_info
         // freeze: start/end offset, flags, name, method_name, ns_entry_name
         //    hll_name, comp_flags, vtable_index, registers, subid
@@ -244,6 +250,7 @@ namespace PACT.Packfile {
             self.name = name;
         }
 
+        // Build from an existing Sub
         function Subroutine(:Sub sub) {
             self.Subroutine();
             self.name       = string(sub);
@@ -268,6 +275,7 @@ namespace PACT.Packfile {
         }
     }
 
+    // A basic container for sub canidates
     class Multi {
         var name;      // String
         var canidates; // RPA
@@ -347,6 +355,7 @@ namespace PACT.Packfile {
         var value; // Constant
         var pc;    // Integer
 
+        // Annotations are string names and constant values
         function Annotation(string name, var value) {
             if (!(value instanceof PACT.Packfile.Constant))
                 die('Annotation value must be a constant');
